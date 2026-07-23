@@ -1,0 +1,73 @@
+{
+  "name": "cogni-sacra-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "engines": {
+    "node": "=24"
+  },
+  "scripts": {
+    "start": "node --env-file=.env dist/index.js",
+    "dev": "tsx watch --env-file=.env src/index.ts",
+    "build": "tsc --project tsconfig.json",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "prepare": "husky",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@getbrevo/brevo": "^5.0.0",
+    "@types/morgan": "^1.9.10",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "joi": "^18.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^9.3.3",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "sharp": "^0.35.3",
+    "stripe": "^20.0.0",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.0.0",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.6.2",
+    "tsx": "^4.23.1",
+    "typescript": "^5.8.0"
+  },
+  "overrides": {
+    "@tiptap/extension-link": "^2.10.4",
+    "tinymce": "^7.0.0"
+  },
+  "lint-staged": {
+    "*.{ts}": [
+      "eslint --cache --fix",
+      "prettier --write"
+    ]
+  },
+  "homepage": "https://github.com/mghulamqadir/cogni-sacra-backend#readme",
+  "bugs": {
+    "url": "https://github.com/mghulamqadir/cogni-sacra-backend/issues"
+  }
+}
