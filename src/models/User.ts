@@ -7,7 +7,8 @@ import { UserRole } from '../types/index.js';
 export interface IUser {
   name: string;
   email: string;
-  password: string;
+  password?: string;
+  googleId?: string;
   role: UserRole;
   stripeCustomerId?: string;
   isEmailVerified: boolean;
@@ -35,8 +36,13 @@ const userSchema = new Schema<IUserDocument>(
     },
     password: {
       type: String,
-      required: true,
       minlength: 8,
+      select: false,
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
       select: false,
     },
     role: {

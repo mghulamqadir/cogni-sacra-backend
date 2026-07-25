@@ -43,6 +43,7 @@ export interface AppEnv {
   MONGO_URI: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
+  GOOGLE_CLIENT_ID: string;
   STRIPE_SECRET_KEY: string;
   STRIPE_WEBHOOK_SECRET: string;
   CLOUDINARY_CLOUD_NAME: string;

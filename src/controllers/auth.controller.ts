@@ -2,7 +2,12 @@ import type { Request, Response } from 'express';
 import type { AuthRequest } from '../types/index.js';
 import * as authService from '../services/auth.service.js';
 import { sendSuccess, sendCreated } from '../utils/response.js';
-import type { RegisterDto, LoginDto, ChangePasswordDto } from '../dtos/index.js';
+import type {
+  RegisterDto,
+  LoginDto,
+  GoogleLoginDto,
+  ChangePasswordDto,
+} from '../dtos/index.js';
 import { AppError } from '../utils/AppError.js';
 
 export async function register(req: Request, res: Response): Promise<void> {
@@ -19,6 +24,12 @@ export async function login(req: Request, res: Response): Promise<void> {
   const dto = req.body as LoginDto;
   const result = await authService.loginUser(dto);
   sendSuccess(res, 'Login successful', result);
+}
+
+export async function googleLogin(req: Request, res: Response): Promise<void> {
+  const dto = req.body as GoogleLoginDto;
+  const result = await authService.loginWithGoogle(dto);
+  sendSuccess(res, 'Google login successful', result);
 }
 
 export async function verifyEmail(req: Request, res: Response): Promise<void> {

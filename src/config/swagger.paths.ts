@@ -36,6 +36,26 @@ export const swaggerPaths = {
       },
     },
   },
+  '/auth/google': {
+    post: {
+      tags: ['Auth'],
+      summary: 'Login or register with Google',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/GoogleLoginBody' },
+          },
+        },
+      },
+      responses: {
+        200: { description: 'Google login successful' },
+        401: { description: 'Invalid Google credential' },
+        409: { description: 'Google account conflict' },
+        422: { description: 'Validation error' },
+      },
+    },
+  },
   '/auth/me': {
     get: {
       tags: ['Auth'],

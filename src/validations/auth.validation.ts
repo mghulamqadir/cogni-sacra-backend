@@ -14,6 +14,11 @@ export const loginSchema = Joi.object({
   password: Joi.string().required(),
 });
 
+export const googleLoginSchema = Joi.object({
+  credential: Joi.string().trim().max(10000).required(),
+  password: Joi.string().max(128),
+});
+
 export const forgotPasswordSchema = Joi.object({
   email: Joi.string().email().lowercase().required(),
 });

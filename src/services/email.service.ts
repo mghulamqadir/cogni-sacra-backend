@@ -30,7 +30,7 @@ async function sendEmail(opts: SendEmailOptions): Promise<void> {
     logger.info(`Email sent to ${opts.to}: ${opts.subject}`);
   } catch (error) {
     logger.error(`Failed to send email to ${opts.to}:`, error);
-    throw new Error('Failed to send email');
+    throw new Error('Failed to send email', { cause: error });
   }
 }
 

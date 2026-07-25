@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import {
   registerSchema,
   loginSchema,
+  googleLoginSchema,
   changePasswordSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -15,6 +16,7 @@ const router = Router();
 
 router.post('/register', validate(registerSchema), asyncHandler(authController.register));
 router.post('/login', validate(loginSchema), asyncHandler(authController.login));
+router.post('/google', validate(googleLoginSchema), asyncHandler(authController.googleLogin));
 router.get('/verify-email', asyncHandler(authController.verifyEmail));
 router.post(
   '/forgot-password',

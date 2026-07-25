@@ -145,6 +145,7 @@ src/
    # JWT
    JWT_SECRET=your_super_secret_jwt_key
    JWT_EXPIRES_IN=7d
+   GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
 
    # Cloudinary
    CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -198,8 +199,26 @@ The server will start at `http://localhost:3000`
 JWT-based authentication with secure token generation and verification
 
 - User registration and login
+- Google Sign-In via `POST /api/auth/google`
 - Password hashing with bcryptjs
 - Protected routes with `authenticate` middleware
+
+The Google endpoint accepts the ID token returned by Google Identity Services:
+
+```json
+{
+  "credential": "GOOGLE_ID_TOKEN",
+  "password": "only-needed-to-link-an-existing-password-account"
+}
+```
+
+After verifying the token, the endpoint creates or links the user and returns the same application
+JWT and user object as password login. If the email already belongs to a password account, the
+current password is required once to prevent unsafe automatic account linking. Keep
+`GOOGLE_CLIENT_SECRET` server-side; this ID-token login flow does not send or require it.
+
+See the [frontend Google authentication integration guide](docs/google-auth-frontend.md) for the
+complete React/TypeScript implementation, API contract, error handling, and test checklist.
 
 ### Payment Processing
 
