@@ -11,6 +11,10 @@ function get(key: keyof AppEnv, fallback?: string): string {
 export const env: AppEnv = {
   NODE_ENV: (process.env['NODE_ENV'] ?? 'development') as AppEnv['NODE_ENV'],
   PORT: parseInt(process.env['PORT'] ?? '3000', 10),
+  SERVER_URL: get('SERVER_URL', `http://localhost:${process.env['PORT'] ?? '3000'}`).replace(
+    /\/$/,
+    ''
+  ),
   CLIENT_URL: get('CLIENT_URL', 'http://localhost:5173'),
   MONGO_URI: get('MONGO_URI'),
   JWT_SECRET: get('JWT_SECRET'),

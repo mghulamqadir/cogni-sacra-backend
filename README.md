@@ -138,6 +138,7 @@ src/
    # Server
    PORT=3000
    NODE_ENV=development
+   SERVER_URL=http://localhost:3000
 
    # Database
    MONGO_URI=mongodb://localhost:27017/cogni_sacra

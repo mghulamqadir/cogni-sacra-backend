@@ -9,8 +9,8 @@ async function bootstrap(): Promise<void> {
   await connectDatabase();
 
   app.listen(env.PORT, () => {
-    logger.info(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
-    logger.info(`Swagger docs  → http://localhost:${env.PORT}/api-docs`);
+    logger.info(`Server running at ${env.SERVER_URL} [${env.NODE_ENV}]`);
+    logger.info(`Swagger docs  → ${env.SERVER_URL}/api-docs`);
   });
 }
 
