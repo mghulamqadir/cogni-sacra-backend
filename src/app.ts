@@ -15,7 +15,8 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    // every URL is allowed to access the API, but credentials are allowed
+    origin: '*',
     credentials: true,
   })
 );
