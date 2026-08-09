@@ -56,6 +56,25 @@ export const swaggerPaths = {
       },
     },
   },
+  '/auth/forgot-password': {
+    post: {
+      tags: ['Auth'],
+      summary: 'Send password reset email',
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/ForgotPasswordBody' },
+          },
+        },
+      },
+      responses: {
+        200: { description: 'Password reset email sent' },
+        400: { description: 'Email is not registered' },
+        422: { description: 'Validation error' },
+      },
+    },
+  },
   '/auth/me': {
     get: {
       tags: ['Auth'],

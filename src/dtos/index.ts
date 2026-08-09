@@ -6,6 +6,7 @@ export type {
   ChangePasswordDto,
   UserDto,
   AuthResult,
+  RegisterResult,
 } from './auth.dto.js';
 
 // User DTOs

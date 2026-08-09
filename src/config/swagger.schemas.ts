@@ -24,6 +24,13 @@ export const swaggerSchemas = {
       password: { type: 'string' },
     },
   },
+  ForgotPasswordBody: {
+    type: 'object',
+    required: ['email'],
+    properties: {
+      email: { type: 'string', format: 'email' },
+    },
+  },
   GoogleLoginBody: {
     type: 'object',
     required: ['credential'],

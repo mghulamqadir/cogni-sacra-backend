@@ -9,6 +9,7 @@ import type {
   ChangePasswordDto,
   UserDto,
   AuthResult,
+  RegisterResult,
 } from '../dtos/index.js';
 import signToken, {
   generateEmailVerificationToken,
@@ -77,7 +78,7 @@ async function runTokenAction<T>(
   }
 }
 
-export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
+export async function registerUser(dto: RegisterDto): Promise<RegisterResult> {
   const { name, email, password, confirmPassword } = dto;
   const existing = await User.findOne({ email }).lean().exec();
 
@@ -100,9 +101,7 @@ export async function registerUser(dto: RegisterDto): Promise<AuthResult> {
 
   await sendEmailVerification(user.email, verifyUrl);
 
-  const token = signToken(user._id.toString(), user.email, user.role);
-
-  return { token, user: toUserDto(user) };
+  return { user: toUserDto(user) };
 }
 
 export async function loginUser(dto: LoginDto): Promise<AuthResult> {

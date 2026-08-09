@@ -38,3 +38,7 @@ export interface AuthResult {
   token: string;
   user: UserDto;
 }
+
+export interface RegisterResult {
+  user: UserDto;
+}
