@@ -3,9 +3,15 @@ import type { Request, Response, NextFunction } from 'express';
 import type { AuthRequest, JwtPayload } from '../types/index.js';
 import { AppError } from '../utils/AppError.js';
 import { env } from '../config/env.js';
-import type { Types } from 'mongoose';
+import { Types } from 'mongoose';
+import { User } from '../models/User.js';
+import { UserStatus } from '../types/index.js';
 
-export function authenticate(req: Request, _res: Response, next: NextFunction): void {
+export async function authenticate(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
   const authHeader = req.headers['authorization'];
 
   if (!authHeader?.startsWith('Bearer ')) {
@@ -17,10 +23,16 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
   try {
     const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
+    const user = await User.findById(payload.userId).lean().exec();
+    if (user === null || user.status === UserStatus.Suspended) {
+      return next(new AppError('Account is unavailable', 401, 'ACCOUNT_UNAVAILABLE'));
+    }
     (req as AuthRequest).user = {
-      _id: payload.userId as unknown as Types.ObjectId,
-      email: payload.email,
-      role: payload.role,
+      _id: new Types.ObjectId(payload.userId),
+      email: user.email,
+      role: user.role,
+      institutionId: user.institutionId,
+      status: user.status,
     };
 
     next();

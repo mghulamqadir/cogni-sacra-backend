@@ -9,6 +9,7 @@ import {
   changePasswordSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  acceptInvitationSchema,
 } from '../validations/auth.validation.js';
 import * as authController from '../controllers/auth.controller.js';
 
@@ -16,6 +17,11 @@ const router = Router();
 
 router.post('/register', validate(registerSchema), asyncHandler(authController.register));
 router.post('/login', validate(loginSchema), asyncHandler(authController.login));
+router.post(
+  '/accept-invitation',
+  validate(acceptInvitationSchema),
+  asyncHandler(authController.acceptInvitation)
+);
 router.post('/google', validate(googleLoginSchema), asyncHandler(authController.googleLogin));
 router.get('/verify-email', asyncHandler(authController.verifyEmail));
 router.post(

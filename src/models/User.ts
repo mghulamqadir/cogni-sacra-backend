@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 import type { Document, Types } from 'mongoose';
-import { UserRole } from '../types/index.js';
+import { UserRole, UserStatus } from '../types/index.js';
 
 // ─── Document interface ───────────────────────────────────────────────────────
 
@@ -10,6 +10,8 @@ export interface IUser {
   password?: string;
   googleId?: string;
   role: UserRole;
+  institutionId?: Types.ObjectId;
+  status: UserStatus;
   stripeCustomerId?: string;
   isEmailVerified: boolean;
   createdAt: Date;
@@ -48,7 +50,17 @@ const userSchema = new Schema<IUserDocument>(
     role: {
       type: String,
       enum: Object.values(UserRole),
-      default: UserRole.User,
+      default: UserRole.IndependentLearner,
+    },
+    institutionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Institution',
+      index: true,
+    },
+    status: {
+      type: String,
+      enum: Object.values(UserStatus),
+      default: UserStatus.Active,
     },
     stripeCustomerId: {
       type: String,
@@ -60,5 +72,25 @@ const userSchema = new Schema<IUserDocument>(
   },
   { timestamps: true }
 );
+
+userSchema.index({ institutionId: 1, role: 1 });
+userSchema.index(
+  { institutionId: 1, role: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { role: UserRole.InstitutionAdmin, status: UserStatus.Active },
+  }
+);
+userSchema.pre('validate', function validateTenantInvariant() {
+  const tenantRole = [UserRole.InstitutionAdmin, UserRole.Instructor, UserRole.Learner].includes(
+    this.role
+  );
+  if (tenantRole && this.status !== UserStatus.PendingInstitution && this.institutionId == null) {
+    this.invalidate('institutionId', 'institutionId is required for provisioned tenant users');
+  }
+  if ([UserRole.PlatformAdmin, UserRole.IndependentLearner].includes(this.role)) {
+    this.institutionId = undefined;
+  }
+});
 
 export const User = model<IUserDocument>('User', userSchema);

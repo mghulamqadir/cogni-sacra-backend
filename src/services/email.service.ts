@@ -51,3 +51,11 @@ export async function sendEmailVerification(to: string, verifyUrl: string): Prom
     html: emailTemplates.emailVerification(verifyUrl),
   });
 }
+
+export async function sendInvitationEmail(to: string, activationUrl: string): Promise<void> {
+  await sendEmail({
+    to,
+    subject: 'Activate your CogniSacra account',
+    html: `<p>You have been invited to CogniSacra.</p><p><a href="${activationUrl}">Choose your password and activate your account</a></p><p>This link expires in 72 hours.</p>`,
+  });
+}

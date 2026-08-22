@@ -32,3 +32,9 @@ export const changePasswordSchema = Joi.object({
   currentPassword: Joi.string().required(),
   newPassword: Joi.string().min(8).max(128).required(),
 });
+
+export const acceptInvitationSchema = Joi.object({
+  token: Joi.string().min(32).required(),
+  name: Joi.string().trim().min(2).max(80).required(),
+  password: Joi.string().min(8).max(128).required(),
+});

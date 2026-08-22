@@ -6,7 +6,12 @@ import { env } from '../config/env.js';
 
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
   if (err instanceof AppError) {
-    const body: ApiResponse = { success: false, message: err.message };
+    const body: ApiResponse = {
+      success: false,
+      message: err.message,
+      code: err.code,
+      requestId: req.id,
+    };
     res.status(err.statusCode).json(body);
     return;
   }
@@ -24,6 +29,6 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
         ? err.message
         : String(err);
 
-  const body: ApiResponse = { success: false, message };
+  const body: ApiResponse = { success: false, message, code: 'INTERNAL_ERROR', requestId: req.id };
   res.status(500).json(body);
 }

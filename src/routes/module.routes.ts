@@ -1,0 +1,15 @@
+import { Router } from 'express';
+import { authenticate } from '../middlewares/authenticate.js';
+import { institutionScope } from '../middlewares/institutionScope.js';
+import { authorize } from '../middlewares/authorize.js';
+import { validate } from '../middlewares/validate.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { UserRole } from '../types/index.js';
+import * as c from '../controllers/course.controller.js';
+import { moduleUpdate, lessonInput } from '../validations/course.validation.js';
+const r = Router();
+r.use(authenticate, institutionScope, authorize(UserRole.PlatformAdmin, UserRole.Instructor));
+r.patch('/:id', validate(moduleUpdate), asyncHandler(c.updateModule));
+r.delete('/:id', asyncHandler(c.deleteModule));
+r.post('/:moduleId/lessons', validate(lessonInput), asyncHandler(c.addLesson));
+export default r;

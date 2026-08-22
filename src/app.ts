@@ -9,14 +9,18 @@ import { errorHandler } from './middlewares/errorHandler.js';
 import { setupSwagger } from './config/swagger.js';
 import webhookRoutes from './routes/webhook.routes.js';
 import router from './routes/index.js';
+import { requestId } from './middlewares/requestId.js';
+import mongoose from 'mongoose';
 
 const app = express();
+app.set('trust proxy', 1);
+app.use(requestId);
 
 app.use(helmet());
 app.use(
   cors({
     // every URL is allowed to access the API, but credentials are allowed
-    origin: '*',
+    origin: env.CLIENT_URL,
     credentials: true,
   })
 );
@@ -34,12 +38,18 @@ app.use(
   })
 );
 
-app.use('/api', router);
+app.use('/api/v1', router);
 
 setupSwagger(app);
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, message: 'Server is healthy' });
+});
+app.get('/ready', (_req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  res
+    .status(ready ? 200 : 503)
+    .json({ success: ready, message: ready ? 'Server is ready' : 'Database is unavailable' });
 });
 
 app.use((_req, res) => {

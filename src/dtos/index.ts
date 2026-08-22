@@ -7,6 +7,7 @@ export type {
   UserDto,
   AuthResult,
   RegisterResult,
+  AcceptInvitationDto,
 } from './auth.dto.js';
 
 // User DTOs

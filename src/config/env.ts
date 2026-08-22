@@ -8,6 +8,8 @@ function get(key: keyof AppEnv, fallback?: string): string {
   return value;
 }
 
+const boolean = (value: string): boolean => value === 'true';
+
 export const env: AppEnv = {
   NODE_ENV: (process.env['NODE_ENV'] ?? 'development') as AppEnv['NODE_ENV'],
   PORT: parseInt(process.env['PORT'] ?? '3000', 10),
@@ -28,4 +30,13 @@ export const env: AppEnv = {
   BREVO_API_KEY: get('BREVO_API_KEY'),
   SENDER_EMAIL: get('SENDER_EMAIL'),
   SENDER_NAME: get('SENDER_NAME'),
+  AI_PROVIDER: get('AI_PROVIDER', 'anthropic'),
+  AI_API_KEY: get('AI_API_KEY', ''),
+  AI_MODEL: get('AI_MODEL', 'claude-sonnet-4-6'),
+  AI_TUTOR_MAX_CONTEXT_TOKENS: Number(get('AI_TUTOR_MAX_CONTEXT_TOKENS', '6000')),
+  AI_TUTOR_MAX_QUESTION_CHARS: Number(get('AI_TUTOR_MAX_QUESTION_CHARS', '2000')),
+  AI_TUTOR_RATE_LIMIT_PER_HOUR: Number(get('AI_TUTOR_RATE_LIMIT_PER_HOUR', '30')),
+  FEATURE_VIRTUAL_LIBRARY: boolean(get('FEATURE_VIRTUAL_LIBRARY', 'false')),
+  FEATURE_PAID_ENROLLMENT: boolean(get('FEATURE_PAID_ENROLLMENT', 'false')),
+  LOG_LEVEL: get('LOG_LEVEL', 'info'),
 };

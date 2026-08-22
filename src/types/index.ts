@@ -7,19 +7,33 @@ export interface ApiResponse<T = undefined> {
   success: boolean;
   message: string;
   data?: T;
+  code?: string;
+  requestId?: string;
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export enum UserRole {
-  User = 'user',
-  Admin = 'admin',
+  PlatformAdmin = 'platform_admin',
+  InstitutionAdmin = 'institution_admin',
+  Instructor = 'instructor',
+  Learner = 'learner',
+  IndependentLearner = 'independent_learner',
+}
+
+export enum UserStatus {
+  PendingInstitution = 'pending_institution',
+  Invited = 'invited',
+  Active = 'active',
+  Suspended = 'suspended',
 }
 
 export interface AuthenticatedUser {
   _id: Types.ObjectId;
   email: string;
   role: UserRole;
+  institutionId?: Types.ObjectId;
+  status: UserStatus;
 }
 
 export interface AuthRequest extends Request {
@@ -53,4 +67,13 @@ export interface AppEnv {
   BREVO_API_KEY: string;
   SENDER_EMAIL: string;
   SENDER_NAME: string;
+  AI_PROVIDER: string;
+  AI_API_KEY: string;
+  AI_MODEL: string;
+  AI_TUTOR_MAX_CONTEXT_TOKENS: number;
+  AI_TUTOR_MAX_QUESTION_CHARS: number;
+  AI_TUTOR_RATE_LIMIT_PER_HOUR: number;
+  FEATURE_VIRTUAL_LIBRARY: boolean;
+  FEATURE_PAID_ENROLLMENT: boolean;
+  LOG_LEVEL: string;
 }

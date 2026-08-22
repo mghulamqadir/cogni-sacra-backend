@@ -4,7 +4,11 @@ import { stripe } from '../config/stripe.js';
 import { env } from '../config/env.js';
 import { AppError } from '../utils/AppError.js';
 import { logger } from '../utils/logger.js';
-import { handlePaymentSucceeded, handlePaymentFailed } from '../services/payment.service.js';
+import {
+  handlePaymentSucceeded,
+  handlePaymentFailed,
+  handleCheckoutCompleted,
+} from '../services/payment.service.js';
 
 type StripeEventHandler = (event: Stripe.Event) => Promise<void>;
 
@@ -28,6 +32,9 @@ function constructStripeEvent(req: Request, signature: string): Stripe.Event {
 
 function createStripeEventHandlers(): Record<string, StripeEventHandler> {
   return {
+    'checkout.session.completed': async (stripeEvent) => {
+      await handleCheckoutCompleted(stripeEvent.data.object as Stripe.Checkout.Session);
+    },
     'payment_intent.succeeded': async (stripeEvent) => {
       const intent = stripeEvent.data.object as Stripe.PaymentIntent;
       await handlePaymentSucceeded(intent.id);

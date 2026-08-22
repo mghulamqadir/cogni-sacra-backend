@@ -3,6 +3,11 @@ import { Payment } from '../models/Payment.js';
 import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import type { CreatePaymentIntentDto, PaymentIntentResult, PaymentDto } from '../dtos/index.js';
+import { Course } from '../models/Course.js';
+import { Enrollment } from '../models/Enrollment.js';
+import { UserRole } from '../types/index.js';
+import { env } from '../config/env.js';
+import type Stripe from 'stripe';
 
 async function getUserOrThrow(userId: string) {
   const user = await User.findById(userId).lean().exec();
@@ -97,4 +102,74 @@ export async function handlePaymentFailed(paymentIntentId: string): Promise<void
     { stripePaymentIntentId: paymentIntentId },
     { status: 'failed' }
   ).exec();
+}
+
+export async function createCourseCheckout(userId: string, courseId: string) {
+  if (!env.FEATURE_PAID_ENROLLMENT)
+    throw new AppError('Paid enrollment is disabled', 404, 'FEATURE_DISABLED');
+  const [user, course] = await Promise.all([
+    User.findById(userId).lean(),
+    Course.findOne({ _id: courseId, visibility: 'public', status: 'published' }).lean(),
+  ]);
+  if (user?.role !== UserRole.IndependentLearner || course === null)
+    throw new AppError('Public course not found', 404, 'NOT_FOUND');
+  if (course.priceAmount == null || course.currency == null || course.priceAmount <= 0)
+    throw new AppError('Course is not paid', 409, 'COURSE_NOT_PAID');
+  const existing = await Enrollment.findOne({ courseId, learnerId: userId }).lean();
+  if (existing !== null) return { enrollment: existing };
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer: await ensureStripeCustomerId(userId),
+    success_url: `${env.CLIENT_URL}/courses/${courseId}?checkout=success`,
+    cancel_url: `${env.CLIENT_URL}/courses/${courseId}?checkout=cancelled`,
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: course.currency.toLowerCase(),
+          unit_amount: course.priceAmount,
+          product_data: { name: course.title },
+        },
+      },
+    ],
+    metadata: {
+      courseId,
+      learnerId: userId,
+      institutionId: course.institutionId?.toString() ?? '',
+    },
+  });
+  return { checkoutSessionId: session.id, checkoutUrl: session.url };
+}
+
+export async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promise<void> {
+  if (session.payment_status !== 'paid') return;
+  const { courseId, learnerId, institutionId = '' } = session.metadata ?? {};
+  if (!courseId || !learnerId)
+    throw new AppError('Checkout metadata is invalid', 400, 'INVALID_CHECKOUT_METADATA');
+  const [course, user] = await Promise.all([
+    Course.findOne({ _id: courseId, visibility: 'public', status: 'published' }).lean(),
+    User.findById(learnerId).lean(),
+  ]);
+  if (
+    course === null ||
+    user?.role !== UserRole.IndependentLearner ||
+    (course.institutionId?.toString() ?? '') !== institutionId
+  )
+    throw new AppError(
+      'Checkout metadata does not match resources',
+      400,
+      'INVALID_CHECKOUT_METADATA'
+    );
+  await Enrollment.findOneAndUpdate(
+    { courseId, learnerId },
+    {
+      $setOnInsert: {
+        institutionId: course.institutionId,
+        source: 'paid',
+        enrolledAt: new Date(),
+        stripeCheckoutSessionId: session.id,
+      },
+    },
+    { upsert: true }
+  );
 }

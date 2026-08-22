@@ -1,4 +1,5 @@
-import type { UserRole } from '../types/index.js';
+import type { UserRole, UserStatus } from '../types/index.js';
+import type { Types } from 'mongoose';
 
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
 
@@ -24,6 +25,12 @@ export interface ChangePasswordDto {
   newPassword: string;
 }
 
+export interface AcceptInvitationDto {
+  token: string;
+  name: string;
+  password: string;
+}
+
 // ─── Response DTOs ────────────────────────────────────────────────────────────
 
 export interface UserDto {
@@ -32,6 +39,8 @@ export interface UserDto {
   email: string;
   role: UserRole;
   isEmailVerified: boolean;
+  status: UserStatus;
+  institutionId?: Types.ObjectId;
 }
 
 export interface AuthResult {

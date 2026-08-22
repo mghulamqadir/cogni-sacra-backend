@@ -18,13 +18,21 @@ router.patch('/me', validate(updateProfileSchema), asyncHandler(userController.u
 // Admin only
 router.get(
   '/',
-  authorizeRoles(UserRole.Admin),
+  authorizeRoles(UserRole.PlatformAdmin),
   validateQuery(listUsersQuerySchema),
   asyncHandler(userController.listUsers)
 );
 
-router.get('/:id', authorizeRoles(UserRole.Admin), asyncHandler(userController.getUserById));
+router.get(
+  '/:id',
+  authorizeRoles(UserRole.PlatformAdmin),
+  asyncHandler(userController.getUserById)
+);
 
-router.delete('/:id', authorizeRoles(UserRole.Admin), asyncHandler(userController.deleteUser));
+router.delete(
+  '/:id',
+  authorizeRoles(UserRole.PlatformAdmin),
+  asyncHandler(userController.deleteUser)
+);
 
 export default router;

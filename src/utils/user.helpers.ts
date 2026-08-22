@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import type { UserDto, UserListItem } from '../dtos/index.js';
-import type { UserRole } from '../types/index.js';
+import type { UserRole, UserStatus } from '../types/index.js';
+import type { Types } from 'mongoose';
 import { AppError } from './AppError.js';
 
 type UserIdentity = {
@@ -9,6 +10,8 @@ type UserIdentity = {
   email: string;
   role: UserRole;
   isEmailVerified: boolean;
+  status: UserStatus;
+  institutionId?: Types.ObjectId;
 };
 
 type UserListIdentity = UserIdentity & {
@@ -40,6 +43,8 @@ export function toUserDto(doc: UserIdentity): UserDto {
     email: doc.email,
     role: doc.role,
     isEmailVerified: doc.isEmailVerified,
+    status: doc.status,
+    institutionId: doc.institutionId,
   };
 }
 

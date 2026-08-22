@@ -7,6 +7,7 @@ import type {
   LoginDto,
   GoogleLoginDto,
   ChangePasswordDto,
+  AcceptInvitationDto,
 } from '../dtos/index.js';
 import { AppError } from '../utils/AppError.js';
 
@@ -18,6 +19,11 @@ export async function register(req: Request, res: Response): Promise<void> {
     'Registration successful. Please check your email to verify your account.',
     result
   );
+}
+
+export async function acceptInvitation(req: Request, res: Response): Promise<void> {
+  const result = await authService.acceptInvitation(req.body as AcceptInvitationDto);
+  sendCreated(res, 'Invitation accepted', result);
 }
 
 export async function login(req: Request, res: Response): Promise<void> {

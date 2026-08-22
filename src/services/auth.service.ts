@@ -26,6 +26,11 @@ import {
 } from '../utils/user.helpers.js';
 import { sendEmailVerification, sendPasswordResetEmail } from './email.service.js';
 import { env } from '../config/env.js';
+import { createHash } from 'node:crypto';
+import mongoose from 'mongoose';
+import { Invitation } from '../models/Invitation.js';
+import { UserRole, UserStatus } from '../types/index.js';
+import type { AcceptInvitationDto } from '../dtos/index.js';
 
 const googleClient = new OAuth2Client();
 
@@ -94,6 +99,8 @@ export async function registerUser(dto: RegisterDto): Promise<RegisterResult> {
     email: email,
     password: hashedPassword,
     isEmailVerified: false,
+    role: UserRole.IndependentLearner,
+    status: UserStatus.Active,
   });
 
   const verificationToken = generateEmailVerificationToken(user._id.toString(), user.email);
@@ -115,6 +122,8 @@ export async function loginUser(dto: LoginDto): Promise<AuthResult> {
   ) {
     throw new AppError('Invalid email or password', 401);
   }
+  if (user.status !== UserStatus.Active)
+    throw new AppError('Account is not active', 403, 'ACCOUNT_UNAVAILABLE');
 
   const token = signToken(user._id.toString(), user.email, user.role);
 
@@ -123,14 +132,11 @@ export async function loginUser(dto: LoginDto): Promise<AuthResult> {
 
 export async function loginWithGoogle(dto: GoogleLoginDto): Promise<AuthResult> {
   let ticket;
-  console.log('Google credential:', dto.credential);
   try {
     ticket = await googleClient.verifyIdToken({
       idToken: dto.credential,
       audience: env.GOOGLE_CLIENT_ID,
     });
-
-    console.log('Google ticket payload:', ticket.getPayload());
   } catch {
     throw new AppError('Invalid or expired Google credential', 401);
   }
@@ -179,12 +185,57 @@ export async function loginWithGoogle(dto: GoogleLoginDto): Promise<AuthResult> 
         email,
         googleId,
         isEmailVerified: true,
+        role: UserRole.IndependentLearner,
+        status: UserStatus.Active,
       });
     }
   }
 
+  if (user.status !== UserStatus.Active)
+    throw new AppError('Account is not active', 403, 'ACCOUNT_UNAVAILABLE');
+
   const token = signToken(user._id.toString(), user.email, user.role);
   return { token, user: toUserDto(user) };
+}
+
+export async function acceptInvitation(dto: AcceptInvitationDto): Promise<AuthResult> {
+  const session = await mongoose.startSession();
+  try {
+    return await session.withTransaction(async () => {
+      const tokenHash = createHash('sha256').update(dto.token).digest('hex');
+      const invitation = await Invitation.findOne({ tokenHash, status: 'pending' })
+        .session(session)
+        .exec();
+      if (invitation === null)
+        throw new AppError('Invitation is invalid or already used', 400, 'INVITATION_INVALID');
+      if (invitation.expiresAt <= new Date()) {
+        invitation.status = 'expired';
+        await invitation.save({ session });
+        throw new AppError('Invitation has expired', 400, 'INVITATION_EXPIRED');
+      }
+      if (await User.exists({ email: invitation.email }).session(session))
+        throw new AppError('Email already registered', 409, 'EMAIL_EXISTS');
+      const user = new User({
+        name: dto.name,
+        email: invitation.email,
+        password: await hashPassword(dto.password),
+        role: invitation.role as UserRole,
+        institutionId: invitation.institutionId,
+        status: UserStatus.Active,
+        isEmailVerified: true,
+      });
+      await user.save({ session });
+      invitation.status = 'accepted';
+      invitation.acceptedAt = new Date();
+      await invitation.save({ session });
+      return {
+        token: signToken(user._id.toString(), user.email, user.role),
+        user: toUserDto(user),
+      };
+    });
+  } finally {
+    await session.endSession();
+  }
 }
 
 export async function getMe(userId: string): Promise<UserDto> {
