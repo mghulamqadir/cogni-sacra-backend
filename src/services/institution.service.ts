@@ -127,7 +127,9 @@ export async function inviteMember(
   await invitation.save();
   await sendInvitationEmail(
     email,
-    `${env.CLIENT_URL}/accept-invitation?token=${encodeURIComponent(token)}`
+    `${env.CLIENT_URL}/accept-invitation?token=${encodeURIComponent(token)}`,
+    input.role as 'institution_admin' | 'instructor' | 'learner',
+    institution.name
   );
   await audit({
     institutionId: invitation.institutionId,
