@@ -10,7 +10,7 @@ r.use(authenticate);
 const a = (req: Parameters<typeof authenticate>[0]) => (req as AuthRequest).user;
 r.get(
   '/instructor/courses/:id/analytics',
-  authorize(UserRole.Instructor),
+  authorize(UserRole.Instructor, UserRole.IndependentInstructor),
   asyncHandler(async (req, res) =>
     sendSuccess(res, 'Analytics fetched', await s.courseAnalytics(a(req), String(req.params['id'])))
   )
@@ -33,4 +33,16 @@ r.get(
     sendSuccess(res, 'Summary fetched', await s.learnerSummary(a(req), String(req.params['id'])))
   )
 );
+r.get(
+  '/independent-instructor/courses/:id/earnings',
+  authorize(UserRole.IndependentInstructor),
+  asyncHandler(async (req, res) =>
+    sendSuccess(
+      res,
+      'Earnings fetched',
+      await s.independentCourseEarnings(a(req), String(req.params['id']))
+    )
+  )
+);
+
 export default r;

@@ -8,6 +8,7 @@ export interface RegisterDto {
   email: string;
   password: string;
   confirmPassword: string;
+  accountType: 'learner' | 'instructor';
 }
 
 export interface LoginDto {
@@ -18,6 +19,7 @@ export interface LoginDto {
 export interface GoogleLoginDto {
   credential: string;
   password?: string;
+  accountType?: 'learner' | 'instructor';
 }
 
 export interface ChangePasswordDto {

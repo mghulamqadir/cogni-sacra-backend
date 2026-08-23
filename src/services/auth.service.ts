@@ -84,7 +84,7 @@ async function runTokenAction<T>(
 }
 
 export async function registerUser(dto: RegisterDto): Promise<RegisterResult> {
-  const { name, email, password, confirmPassword } = dto;
+  const { name, email, password, confirmPassword, accountType } = dto;
   const existing = await User.findOne({ email }).lean().exec();
 
   if (existing !== null) {
@@ -99,7 +99,7 @@ export async function registerUser(dto: RegisterDto): Promise<RegisterResult> {
     email: email,
     password: hashedPassword,
     isEmailVerified: false,
-    role: UserRole.IndependentLearner,
+    role: accountType === 'instructor' ? UserRole.IndependentInstructor : UserRole.IndependentLearner,
     status: UserStatus.Active,
   });
 
@@ -185,7 +185,7 @@ export async function loginWithGoogle(dto: GoogleLoginDto): Promise<AuthResult> 
         email,
         googleId,
         isEmailVerified: true,
-        role: UserRole.IndependentLearner,
+        role: dto.accountType === 'instructor' ? UserRole.IndependentInstructor : UserRole.IndependentLearner,
         status: UserStatus.Active,
       });
     }

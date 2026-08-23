@@ -46,6 +46,8 @@ export async function selfEnroll(actor: AuthenticatedUser, courseId: string) {
   const course = await Course.findById(courseId).lean();
   if (course === null || course.status !== 'published')
     throw new AppError('Course not found', 404, 'NOT_FOUND');
+  if (actor.role === UserRole.IndependentInstructor && course.createdBy.equals(actor._id))
+    throw new AppError('Instructors cannot enroll in their own courses', 403, 'FORBIDDEN');
   const independent = actor.role === UserRole.IndependentLearner && course.visibility === 'public';
   const tenant =
     actor.role === UserRole.Learner &&

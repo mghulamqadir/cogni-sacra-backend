@@ -87,7 +87,7 @@ userSchema.pre('validate', function validateTenantInvariant() {
   if (tenantRole && this.status !== UserStatus.PendingInstitution && this.institutionId == null) {
     this.invalidate('institutionId', 'institutionId is required for provisioned tenant users');
   }
-  if ([UserRole.PlatformAdmin, UserRole.IndependentLearner].includes(this.role)) {
+  if ([UserRole.PlatformAdmin, UserRole.IndependentLearner, UserRole.IndependentInstructor].includes(this.role)) {
     this.institutionId = undefined;
   }
 });

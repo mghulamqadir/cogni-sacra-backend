@@ -24,3 +24,15 @@ test('independent learners cannot retain a tenant identifier', () => {
   user.validateSync();
   assert.equal(user.institutionId, undefined);
 });
+
+test('independent instructors are institution-less accounts', () => {
+  const user = new User({
+    name: 'Instructor',
+    email: 'instructor@example.com',
+    role: UserRole.IndependentInstructor,
+    status: UserStatus.Active,
+    institutionId: '507f1f77bcf86cd799439011',
+  });
+  user.validateSync();
+  assert.equal(user.institutionId, undefined);
+});

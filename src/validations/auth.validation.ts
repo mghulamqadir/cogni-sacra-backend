@@ -7,6 +7,7 @@ export const registerSchema = Joi.object({
   confirmPassword: Joi.string().valid(Joi.ref('password')).required().messages({
     'any.only': 'Confirm password must match password',
   }),
+  accountType: Joi.string().valid('learner', 'instructor').default('learner'),
 });
 
 export const loginSchema = Joi.object({
@@ -17,6 +18,7 @@ export const loginSchema = Joi.object({
 export const googleLoginSchema = Joi.object({
   credential: Joi.string().trim().max(10000).required(),
   password: Joi.string().max(128),
+  accountType: Joi.string().valid('learner', 'instructor').default('learner'),
 });
 
 export const forgotPasswordSchema = Joi.object({

@@ -10,7 +10,11 @@ import { AppError } from '../utils/AppError.js';
 import { UserRole, UserStatus, type AuthenticatedUser } from '../types/index.js';
 export async function courseAnalytics(actor: AuthenticatedUser, id: string) {
   const c = await Course.findById(id).lean();
-  if (c === null || actor.role !== UserRole.Instructor || !c.instructorId?.equals(actor._id))
+  if (
+    c === null ||
+    ![UserRole.Instructor, UserRole.IndependentInstructor].includes(actor.role) ||
+    !c.instructorId?.equals(actor._id)
+  )
     throw new AppError('Course not found', 404, 'NOT_FOUND');
   const [e, lessons, attempts] = await Promise.all([
     Enrollment.find({ courseId: id }).lean(),
@@ -92,5 +96,25 @@ export async function learnerSummary(actor: AuthenticatedUser, courseId: string)
     totalLessons: total,
     courseStatus: e.status,
     assessments: results,
+  };
+}
+
+export async function independentCourseEarnings(actor: AuthenticatedUser, courseId: string) {
+  if (actor.role !== UserRole.IndependentInstructor)
+    throw new AppError('Forbidden', 403, 'FORBIDDEN');
+  const course = await Course.findOne({
+    _id: courseId,
+    createdBy: actor._id,
+    institutionId: { $exists: false },
+  }).lean();
+  if (course === null) throw new AppError('Course not found', 404, 'NOT_FOUND');
+  const enrollments = await Enrollment.find({ courseId, source: 'paid' }).lean();
+  return {
+    courseId: course._id,
+    currency: course.currency?.toUpperCase() ?? null,
+    paidEnrollmentCount: enrollments.length,
+    grossSalesAmount: (course.priceAmount ?? 0) * enrollments.length,
+    refunds: { count: 0, amount: 0 },
+    note: 'Refund reporting will be populated when Stripe refund event persistence is enabled.',
   };
 }

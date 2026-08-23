@@ -19,6 +19,7 @@ export enum UserRole {
   Instructor = 'instructor',
   Learner = 'learner',
   IndependentLearner = 'independent_learner',
+  IndependentInstructor = 'independent_instructor',
 }
 
 export enum UserStatus {

@@ -11,6 +11,7 @@ export function institutionScope(req: Request, _res: Response, next: NextFunctio
   if (
     user.role !== UserRole.PlatformAdmin &&
     user.role !== UserRole.IndependentLearner &&
+    user.role !== UserRole.IndependentInstructor &&
     user.institutionId == null
   ) {
     return next(new AppError('Institution scope is required', 403, 'INSTITUTION_SCOPE_REQUIRED'));

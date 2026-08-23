@@ -61,7 +61,7 @@ export const swaggerPaths = {
   '/auth/register': {
     post: {
       tags: ['Auth'],
-      summary: 'Register an independent learner',
+      summary: 'Register an independent learner or instructor',
       requestBody: body('RegisterBody'),
       responses: { 201: ok('Registration successful'), 409: errors[409], 422: errors[422] },
     },
@@ -82,7 +82,7 @@ export const swaggerPaths = {
   '/auth/google': {
     post: {
       tags: ['Auth'],
-      summary: 'Login or register an independent learner with Google',
+      summary: 'Login or register a public learner or instructor with Google',
       requestBody: body('GoogleLoginBody'),
       responses: { 200: ok(), 401: errors[401], 409: errors[409], 422: errors[422] },
     },
@@ -142,6 +142,7 @@ export const swaggerPaths = {
               'instructor',
               'learner',
               'independent_learner',
+              'independent_instructor',
             ],
           },
         },
@@ -359,6 +360,11 @@ export const swaggerPaths = {
   },
   '/instructor/courses/{id}/analytics': {
     get: operation(['Analytics'], 'Get owned-course analytics', { parameters: [id()] }),
+  },
+  '/independent-instructor/courses/{id}/earnings': {
+    get: operation(['Analytics'], 'Get gross earnings for an owned independent course', {
+      parameters: [id()],
+    }),
   },
   '/institutions/{id}/analytics': {
     get: operation(['Analytics'], 'Get institution analytics', { parameters: [id()] }),

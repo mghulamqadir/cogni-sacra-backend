@@ -8,7 +8,7 @@ import { UserRole } from '../types/index.js';
 import * as c from '../controllers/course.controller.js';
 import { moduleUpdate, lessonInput } from '../validations/course.validation.js';
 const r = Router();
-r.use(authenticate, institutionScope, authorize(UserRole.PlatformAdmin, UserRole.Instructor));
+r.use(authenticate, institutionScope, authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor));
 r.patch('/:id', validate(moduleUpdate), asyncHandler(c.updateModule));
 r.delete('/:id', asyncHandler(c.deleteModule));
 r.post('/:moduleId/lessons', validate(lessonInput), asyncHandler(c.addLesson));

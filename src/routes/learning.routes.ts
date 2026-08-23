@@ -27,7 +27,7 @@ r.post('/lessons/:id/complete', learners, asyncHandler(c.complete));
 r.get('/learner/courses/:courseId/progress', learners, asyncHandler(c.progress));
 r.post(
   '/courses/:courseId/assessments',
-  authorize(UserRole.Instructor),
+  authorize(UserRole.Instructor, UserRole.IndependentInstructor),
   validate(assessmentSchema),
   asyncHandler(c.createAssessment)
 );

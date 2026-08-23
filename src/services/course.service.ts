@@ -15,20 +15,27 @@ async function editableCourse(actor: AuthenticatedUser, id: string) {
   const course = await Course.findById(id).exec();
   if (course === null) throw new AppError('Course not found', 404, 'NOT_FOUND');
   const platformOwner = actor.role === UserRole.PlatformAdmin && course.institutionId == null;
+  const independentOwner =
+    actor.role === UserRole.IndependentInstructor &&
+    course.institutionId == null &&
+    course.instructorId?.equals(actor._id);
   const instructorOwner =
     actor.role === UserRole.Instructor &&
     course.instructorId?.equals(actor._id) &&
     course.institutionId?.equals(actor.institutionId);
-  if (!platformOwner && !instructorOwner) throw new AppError('Forbidden', 403, 'FORBIDDEN');
+  if (!platformOwner && !instructorOwner && !independentOwner)
+    throw new AppError('Forbidden', 403, 'FORBIDDEN');
   return course;
 }
 export async function createCourse(actor: AuthenticatedUser, input: Record<string, unknown>) {
-  if (![UserRole.PlatformAdmin, UserRole.Instructor].includes(actor.role))
+  if (![UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor].includes(actor.role))
     throw new AppError('Forbidden', 403, 'FORBIDDEN');
   return Course.create({
     ...input,
     institutionId: actor.role === UserRole.Instructor ? actor.institutionId : undefined,
-    instructorId: actor.role === UserRole.Instructor ? actor._id : undefined,
+    instructorId: [UserRole.Instructor, UserRole.IndependentInstructor].includes(actor.role)
+      ? actor._id
+      : undefined,
     createdBy: actor._id,
   });
 }
@@ -47,6 +54,7 @@ export async function getCourse(actor: AuthenticatedUser | undefined, id: string
   if (course.visibility === 'public' && course.status === 'published') return course;
   if (
     actor?.role === UserRole.PlatformAdmin ||
+    (actor?.role === UserRole.IndependentInstructor && course.createdBy.equals(actor._id)) ||
     (actor?.institutionId != null && course.institutionId?.equals(actor.institutionId))
   )
     return course;
@@ -65,6 +73,8 @@ export async function publishCourse(actor: AuthenticatedUser, id: string) {
       'COURSE_INCOMPLETE'
     );
   course.status = 'published';
+  if (actor.role === UserRole.IndependentInstructor && course.institutionId == null)
+    course.visibility = 'public';
   course.publishedAt ??= new Date();
   return course.save();
 }

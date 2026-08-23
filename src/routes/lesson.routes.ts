@@ -11,13 +11,13 @@ const r = Router();
 r.use(authenticate, institutionScope);
 r.patch(
   '/:id',
-  authorize(UserRole.PlatformAdmin, UserRole.Instructor),
+  authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
   validate(lessonUpdate),
   asyncHandler(c.updateLesson)
 );
 r.delete(
   '/:id',
-  authorize(UserRole.PlatformAdmin, UserRole.Instructor),
+  authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
   asyncHandler(c.deleteLesson)
 );
 export default r;

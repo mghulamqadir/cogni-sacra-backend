@@ -45,8 +45,6 @@ schema.index({ institutionId: 1, status: 1 });
 schema.index({ institutionId: 1, instructorId: 1 });
 schema.index({ visibility: 1, status: 1 });
 schema.pre('validate', function () {
-  if (this.institutionId == null && this.instructorId != null)
-    this.invalidate('instructorId', 'Platform courses cannot have a tenant instructor');
   if ((this.priceAmount == null) !== (this.currency == null))
     this.invalidate('priceAmount', 'priceAmount and currency must be provided together');
 });

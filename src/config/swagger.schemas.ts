@@ -9,6 +9,7 @@ const roles = [
   'instructor',
   'learner',
   'independent_learner',
+  'independent_instructor',
 ] as const;
 
 export const swaggerSchemas = {
@@ -54,12 +55,17 @@ export const swaggerSchemas = {
   RegisterBody: {
     type: 'object',
     additionalProperties: false,
-    required: ['name', 'email', 'password', 'confirmPassword'],
+    required: ['name', 'email', 'password', 'confirmPassword', 'accountType'],
     properties: {
       name: { type: 'string', minLength: 2, maxLength: 80 },
       email: { type: 'string', format: 'email' },
       password: { type: 'string', minLength: 8, maxLength: 128 },
       confirmPassword: { type: 'string', minLength: 8, maxLength: 128 },
+      accountType: {
+        type: 'string',
+        enum: ['learner', 'instructor'],
+        description: 'Public account path selected during registration.',
+      },
     },
   },
   LoginBody: {
@@ -75,6 +81,7 @@ export const swaggerSchemas = {
     properties: {
       credential: { type: 'string', maxLength: 10000 },
       password: { type: 'string', maxLength: 128 },
+      accountType: { type: 'string', enum: ['learner', 'instructor'] },
     },
   },
   AcceptInvitationBody: {
