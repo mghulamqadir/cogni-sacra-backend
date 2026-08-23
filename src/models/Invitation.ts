@@ -1,6 +1,8 @@
 import { Schema, model, type Types } from 'mongoose';
 
 export interface IInvitation {
+  createdAt?: Date;
+  updatedAt?: Date;
   institutionId: Types.ObjectId;
   email: string;
   role: 'institution_admin' | 'instructor' | 'learner';

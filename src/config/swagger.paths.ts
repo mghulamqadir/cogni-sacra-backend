@@ -158,7 +158,11 @@ export const swaggerPaths = {
   '/institutions': {
     post: operation(['Institutions'], 'Create institution (platform admin)', {
       requestBody: body('InstitutionBody'),
-      responses: { 201: ok(), ...errors },
+      responses: {
+        201: ok(),
+        ...errors,
+        429: { description: 'Invitation resend cooldown is active' },
+      },
     }),
   },
   '/institutions/{id}/approve': {

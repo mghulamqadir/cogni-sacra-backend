@@ -113,6 +113,22 @@ export async function inviteMember(
   const email = input.email.trim().toLowerCase();
   if (await User.exists({ email }))
     throw new AppError('Email already registered', 409, 'EMAIL_EXISTS');
+  const previousInvitations = await Invitation.find({ institutionId, email })
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .select('createdAt')
+    .lean();
+  if (previousInvitations.length > 0) {
+    const cooldownSeconds = previousInvitations.length === 1 ? 30 : previousInvitations.length === 2 ? 120 : 3600;
+    const lastSentAt = previousInvitations[0]?.createdAt?.getTime() ?? Date.now();
+    const retryAfterSeconds = Math.ceil(cooldownSeconds - (Date.now() - lastSentAt) / 1000);
+    if (retryAfterSeconds > 0)
+      throw new AppError(
+        `Please wait ${retryAfterSeconds} seconds before sending another invitation to this email`,
+        429,
+        'INVITATION_RATE_LIMITED'
+      );
+  }
   await Invitation.updateMany({ institutionId, email, status: 'pending' }, { status: 'revoked' });
   const token = randomBytes(32).toString('base64url');
   const invitation = new Invitation({
