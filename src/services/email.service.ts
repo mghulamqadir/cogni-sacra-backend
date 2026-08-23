@@ -88,9 +88,9 @@ export async function sendInvitationEmail(
 
   await sendEmail({
     to,
-    subject: `Your CogniSacra ${roleLabel} invitation`,
+    subject: `Your Cogni-Sacra ${roleLabel} invitation`,
     html: `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>CogniSacra invitation</title></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Cogni-Sacra invitation</title></head>
 <body style="margin:0;background:#f4f7fb;color:#172033;font-family:Arial,Helvetica,sans-serif;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;">You have been invited to join ${safeInstitutionName} as a ${roleLabel}.</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;padding:32px 12px;"><tr><td align="center">
