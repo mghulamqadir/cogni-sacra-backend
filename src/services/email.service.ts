@@ -13,11 +13,17 @@ interface SendEmailOptions {
   html: string;
 }
 
+function maskEmail(email: string): string {
+  const [local = '', domain = ''] = email.split('@');
+  const visible = local.slice(0, 2);
+  return `${visible}${'*'.repeat(Math.max(1, local.length - visible.length))}@${domain}`;
+}
+
 // ─── Core send ────────────────────────────────────────────────────────────────
 
 async function sendEmail(opts: SendEmailOptions): Promise<void> {
   try {
-    await brevo.transactionalEmails.sendTransacEmail({
+    const result = await brevo.transactionalEmails.sendTransacEmail({
       subject: opts.subject,
       htmlContent: opts.html,
       sender: {
@@ -27,9 +33,15 @@ async function sendEmail(opts: SendEmailOptions): Promise<void> {
       to: [{ email: opts.to }],
     });
 
-    logger.info(`Email sent to ${opts.to}: ${opts.subject}`);
+    const messageId = result.messageId ?? result.messageIds?.[0] ?? 'not-returned';
+    logger.info(
+      `Email accepted by Brevo: recipient=${maskEmail(opts.to)} subject="${opts.subject}" messageId=${messageId}`
+    );
   } catch (error) {
-    logger.error(`Failed to send email to ${opts.to}:`, error);
+    const reason = error instanceof Error ? error.message : String(error);
+    logger.error(
+      `Brevo rejected email request: recipient=${maskEmail(opts.to)} subject="${opts.subject}" reason=${reason}`
+    );
     throw new Error('Failed to send email', { cause: error });
   }
 }

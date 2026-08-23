@@ -89,11 +89,17 @@ export async function inviteMember(
         409,
         'INSTITUTION_ADMIN_EXISTS'
       );
+    const pendingAdminInvitation = await Invitation.findOne({
+      institutionId,
+      role: UserRole.InstitutionAdmin,
+      status: 'pending',
+    }).lean();
     if (
-      await Invitation.exists({ institutionId, role: UserRole.InstitutionAdmin, status: 'pending' })
+      pendingAdminInvitation !== null &&
+      pendingAdminInvitation.email !== input.email.trim().toLowerCase()
     )
       throw new AppError(
-        'A first-admin invitation is already pending',
+        'A first-admin invitation is already pending for another email address',
         409,
         'INSTITUTION_ADMIN_INVITATION_EXISTS'
       );

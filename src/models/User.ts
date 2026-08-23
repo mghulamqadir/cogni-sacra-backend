@@ -73,7 +73,6 @@ const userSchema = new Schema<IUserDocument>(
   { timestamps: true }
 );
 
-userSchema.index({ institutionId: 1, role: 1 });
 userSchema.index(
   { institutionId: 1, role: 1 },
   {
