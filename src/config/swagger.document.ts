@@ -7,7 +7,8 @@ export const swaggerDocument = {
   info: {
     title: 'Cogni Sacra API',
     version: '2.0.0',
-    description: 'CogniSacra multi-tenant learning, public catalog, assessment, AI Tutor, library, and payments API. Use Authorize with the JWT returned by login.',
+    description:
+      'CogniSacra multi-tenant learning, public catalog, assessment, AI Tutor, library, and payments API. Use Authorize with the JWT returned by login.',
   },
   servers: [
     {
@@ -26,10 +27,20 @@ export const swaggerDocument = {
     schemas: swaggerSchemas,
   },
   tags: [
-    { name: 'Auth' }, { name: 'Users' }, { name: 'Institutions' }, { name: 'Courses' },
-    { name: 'Course Builder' }, { name: 'Learning' }, { name: 'Assessments' },
-    { name: 'AI Tutor' }, { name: 'Analytics' }, { name: 'Library' }, { name: 'Payments' },
-    { name: 'Media' }, { name: 'Health' }, { name: 'Webhooks' },
+    { name: 'Auth' },
+    { name: 'Users' },
+    { name: 'Institutions' },
+    { name: 'Courses' },
+    { name: 'Course Builder' },
+    { name: 'Learning' },
+    { name: 'Assessments' },
+    { name: 'AI Tutor' },
+    { name: 'Analytics' },
+    { name: 'Library' },
+    { name: 'Payments' },
+    { name: 'Media' },
+    { name: 'Health' },
+    { name: 'Webhooks' },
   ],
   paths: swaggerPaths,
 } as const;

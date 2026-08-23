@@ -1,28 +1,247 @@
-const id = { type: 'string', pattern: '^[a-fA-F0-9]{24}$', example: '507f1f77bcf86cd799439011' } as const;
-const roles = ['platform_admin', 'institution_admin', 'instructor', 'learner', 'independent_learner'] as const;
+const id = {
+  type: 'string',
+  pattern: '^[a-fA-F0-9]{24}$',
+  example: '507f1f77bcf86cd799439011',
+} as const;
+const roles = [
+  'platform_admin',
+  'institution_admin',
+  'instructor',
+  'learner',
+  'independent_learner',
+] as const;
 
 export const swaggerSchemas = {
-  ApiResponse: { type: 'object', required: ['success', 'message'], properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: {} } },
-  ErrorResponse: { type: 'object', required: ['success', 'message', 'code', 'requestId'], properties: { success: { type: 'boolean', example: false }, message: { type: 'string' }, code: { type: 'string', example: 'FORBIDDEN' }, requestId: { type: 'string', format: 'uuid' } } },
-  User: { type: 'object', required: ['id', 'name', 'email', 'role', 'status', 'isEmailVerified'], properties: { id, name: { type: 'string' }, email: { type: 'string', format: 'email' }, role: { type: 'string', enum: roles }, status: { type: 'string', enum: ['pending_institution', 'invited', 'active', 'suspended'] }, institutionId: id, isEmailVerified: { type: 'boolean' } } },
-  AuthResponse: { type: 'object', properties: { success: { type: 'boolean', example: true }, message: { type: 'string' }, data: { type: 'object', properties: { token: { type: 'string' }, user: { $ref: '#/components/schemas/User' } } } } },
-  RegisterBody: { type: 'object', additionalProperties: false, required: ['name', 'email', 'password', 'confirmPassword'], properties: { name: { type: 'string', minLength: 2, maxLength: 80 }, email: { type: 'string', format: 'email' }, password: { type: 'string', minLength: 8, maxLength: 128 }, confirmPassword: { type: 'string', minLength: 8, maxLength: 128 } } },
-  LoginBody: { type: 'object', additionalProperties: false, required: ['email', 'password'], properties: { email: { type: 'string', format: 'email' }, password: { type: 'string' } } },
-  GoogleLoginBody: { type: 'object', additionalProperties: false, required: ['credential'], properties: { credential: { type: 'string', maxLength: 10000 }, password: { type: 'string', maxLength: 128 } } },
-  AcceptInvitationBody: { type: 'object', additionalProperties: false, required: ['token', 'name', 'password'], properties: { token: { type: 'string', minLength: 32 }, name: { type: 'string', minLength: 2, maxLength: 80 }, password: { type: 'string', minLength: 8, maxLength: 128 } } },
-  InstitutionBody: { type: 'object', additionalProperties: false, required: ['name', 'slug'], properties: { name: { type: 'string', minLength: 2, maxLength: 120 }, slug: { type: 'string', minLength: 2, maxLength: 80 }, logoUrl: { type: 'string', format: 'uri' } } },
-  InvitationBody: { type: 'object', additionalProperties: false, required: ['email', 'role'], properties: { email: { type: 'string', format: 'email' }, role: { type: 'string', enum: ['institution_admin', 'instructor', 'learner'] } } },
-  CourseBody: { type: 'object', additionalProperties: false, required: ['title'], properties: { title: { type: 'string', minLength: 2, maxLength: 160 }, description: { type: 'string', maxLength: 5000 }, thumbnailUrl: { type: 'string', format: 'uri' }, enrollmentMode: { type: 'string', enum: ['assigned_only', 'self_enroll'], default: 'assigned_only' }, priceAmount: { type: 'integer', minimum: 0, description: 'Price in minor currency units' }, currency: { type: 'string', minLength: 3, maxLength: 3, example: 'USD' } } },
-  ModuleBody: { type: 'object', additionalProperties: false, required: ['title', 'order'], properties: { title: { type: 'string', maxLength: 160 }, order: { type: 'integer', minimum: 0 } } },
-  LessonBody: { type: 'object', additionalProperties: false, required: ['title', 'order', 'contentType'], properties: { title: { type: 'string', maxLength: 160 }, order: { type: 'integer', minimum: 0 }, contentType: { type: 'string', enum: ['text', 'video', 'link'] }, contentBody: { type: 'string', description: 'Required only for text lessons' }, contentUrl: { type: 'string', format: 'uri', description: 'Required for video/link lessons' }, aiContext: { type: 'string', description: 'Required grounding transcript/summary for video/link lessons' } } },
-  AssignBody: { type: 'object', additionalProperties: false, required: ['learnerId'], properties: { learnerId: id } },
-  AssessmentBody: { type: 'object', additionalProperties: false, required: ['title', 'questions'], properties: { title: { type: 'string' }, lessonId: id, passingScorePercent: { type: 'number', minimum: 0, maximum: 100, default: 60 }, maxAttempts: { type: 'integer', minimum: 1, maximum: 20, default: 1 }, questions: { type: 'array', minItems: 1, items: { type: 'object', additionalProperties: false, required: ['text', 'options', 'correctOptionIndex'], properties: { text: { type: 'string' }, options: { type: 'array', minItems: 2, items: { type: 'string' } }, correctOptionIndex: { type: 'integer', minimum: 0 } } } } } },
-  SubmitAssessmentBody: { type: 'object', additionalProperties: false, required: ['answers'], properties: { answers: { type: 'array', items: { type: 'integer', minimum: 0 }, example: [1, 0, 2] } } },
-  TutorQuestionBody: { type: 'object', additionalProperties: false, required: ['question'], properties: { question: { type: 'string', maxLength: 2000, example: 'What is an algorithm?' } } },
-  LibraryResourceBody: { type: 'object', additionalProperties: false, required: ['title', 'resourceType'], properties: { title: { type: 'string' }, description: { type: 'string' }, authors: { type: 'array', items: { type: 'string' } }, subjects: { type: 'array', items: { type: 'string' } }, resourceType: { type: 'string', enum: ['article', 'book', 'video', 'link', 'file'] }, url: { type: 'string', format: 'uri' }, fileUrl: { type: 'string', format: 'uri' }, aiSummary: { type: 'string' } } },
-  ForgotPasswordBody: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' } } },
-  ResetPasswordBody: { type: 'object', required: ['token', 'password'], properties: { token: { type: 'string' }, password: { type: 'string', minLength: 8, maxLength: 128 } } },
-  ChangePasswordBody: { type: 'object', required: ['currentPassword', 'newPassword'], properties: { currentPassword: { type: 'string' }, newPassword: { type: 'string', minLength: 8, maxLength: 128 } } },
-  UpdateProfileBody: { type: 'object', properties: { name: { type: 'string', minLength: 2, maxLength: 80 } } },
-  CreatePaymentIntentBody: { type: 'object', required: ['amount'], properties: { amount: { type: 'integer', minimum: 50 }, currency: { type: 'string', default: 'usd' }, metadata: { type: 'object', additionalProperties: { type: 'string' } } } },
+  ApiResponse: {
+    type: 'object',
+    required: ['success', 'message'],
+    properties: { success: { type: 'boolean' }, message: { type: 'string' }, data: {} },
+  },
+  ErrorResponse: {
+    type: 'object',
+    required: ['success', 'message', 'code', 'requestId'],
+    properties: {
+      success: { type: 'boolean', example: false },
+      message: { type: 'string' },
+      code: { type: 'string', example: 'FORBIDDEN' },
+      requestId: { type: 'string', format: 'uuid' },
+    },
+  },
+  User: {
+    type: 'object',
+    required: ['id', 'name', 'email', 'role', 'status', 'isEmailVerified'],
+    properties: {
+      id,
+      name: { type: 'string' },
+      email: { type: 'string', format: 'email' },
+      role: { type: 'string', enum: roles },
+      status: { type: 'string', enum: ['pending_institution', 'invited', 'active', 'suspended'] },
+      institutionId: id,
+      isEmailVerified: { type: 'boolean' },
+    },
+  },
+  AuthResponse: {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      message: { type: 'string' },
+      data: {
+        type: 'object',
+        properties: { token: { type: 'string' }, user: { $ref: '#/components/schemas/User' } },
+      },
+    },
+  },
+  RegisterBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['name', 'email', 'password', 'confirmPassword'],
+    properties: {
+      name: { type: 'string', minLength: 2, maxLength: 80 },
+      email: { type: 'string', format: 'email' },
+      password: { type: 'string', minLength: 8, maxLength: 128 },
+      confirmPassword: { type: 'string', minLength: 8, maxLength: 128 },
+    },
+  },
+  LoginBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['email', 'password'],
+    properties: { email: { type: 'string', format: 'email' }, password: { type: 'string' } },
+  },
+  GoogleLoginBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['credential'],
+    properties: {
+      credential: { type: 'string', maxLength: 10000 },
+      password: { type: 'string', maxLength: 128 },
+    },
+  },
+  AcceptInvitationBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['token', 'name', 'password'],
+    properties: {
+      token: { type: 'string', minLength: 32 },
+      name: { type: 'string', minLength: 2, maxLength: 80 },
+      password: { type: 'string', minLength: 8, maxLength: 128 },
+    },
+  },
+  InstitutionBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['name', 'slug'],
+    properties: {
+      name: { type: 'string', minLength: 2, maxLength: 120 },
+      slug: { type: 'string', minLength: 2, maxLength: 80 },
+      logoUrl: { type: 'string', format: 'uri' },
+    },
+  },
+  InvitationBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['email', 'role'],
+    properties: {
+      email: { type: 'string', format: 'email' },
+      role: { type: 'string', enum: ['institution_admin', 'instructor', 'learner'] },
+    },
+  },
+  CourseBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['title'],
+    properties: {
+      title: { type: 'string', minLength: 2, maxLength: 160 },
+      description: { type: 'string', maxLength: 5000 },
+      thumbnailUrl: { type: 'string', format: 'uri' },
+      enrollmentMode: {
+        type: 'string',
+        enum: ['assigned_only', 'self_enroll', 'assigned_and_self_enroll'],
+        default: 'assigned_only',
+        description:
+          'Choose assigned_and_self_enroll to support both assignment and self-enrollment.',
+      },
+      priceAmount: { type: 'integer', minimum: 0, description: 'Price in minor currency units' },
+      currency: { type: 'string', minLength: 3, maxLength: 3, example: 'USD' },
+    },
+  },
+  ModuleBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['title', 'order'],
+    properties: {
+      title: { type: 'string', maxLength: 160 },
+      order: { type: 'integer', minimum: 0 },
+    },
+  },
+  LessonBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['title', 'order', 'contentType'],
+    properties: {
+      title: { type: 'string', maxLength: 160 },
+      order: { type: 'integer', minimum: 0 },
+      contentType: { type: 'string', enum: ['text', 'video', 'link'] },
+      contentBody: { type: 'string', description: 'Required only for text lessons' },
+      contentUrl: { type: 'string', format: 'uri', description: 'Required for video/link lessons' },
+      aiContext: {
+        type: 'string',
+        description: 'Required grounding transcript/summary for video/link lessons',
+      },
+    },
+  },
+  AssignBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['learnerId'],
+    properties: { learnerId: id },
+  },
+  AssessmentBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['title', 'questions'],
+    properties: {
+      title: { type: 'string' },
+      lessonId: id,
+      passingScorePercent: { type: 'number', minimum: 0, maximum: 100, default: 60 },
+      maxAttempts: { type: 'integer', minimum: 1, maximum: 20, default: 1 },
+      questions: {
+        type: 'array',
+        minItems: 1,
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['text', 'options', 'correctOptionIndex'],
+          properties: {
+            text: { type: 'string' },
+            options: { type: 'array', minItems: 2, items: { type: 'string' } },
+            correctOptionIndex: { type: 'integer', minimum: 0 },
+          },
+        },
+      },
+    },
+  },
+  SubmitAssessmentBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['answers'],
+    properties: {
+      answers: { type: 'array', items: { type: 'integer', minimum: 0 }, example: [1, 0, 2] },
+    },
+  },
+  TutorQuestionBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['question'],
+    properties: { question: { type: 'string', maxLength: 2000, example: 'What is an algorithm?' } },
+  },
+  LibraryResourceBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['title', 'resourceType'],
+    properties: {
+      title: { type: 'string' },
+      description: { type: 'string' },
+      authors: { type: 'array', items: { type: 'string' } },
+      subjects: { type: 'array', items: { type: 'string' } },
+      resourceType: { type: 'string', enum: ['article', 'book', 'video', 'link', 'file'] },
+      url: { type: 'string', format: 'uri' },
+      fileUrl: { type: 'string', format: 'uri' },
+      aiSummary: { type: 'string' },
+    },
+  },
+  ForgotPasswordBody: {
+    type: 'object',
+    required: ['email'],
+    properties: { email: { type: 'string', format: 'email' } },
+  },
+  ResetPasswordBody: {
+    type: 'object',
+    required: ['token', 'password'],
+    properties: {
+      token: { type: 'string' },
+      password: { type: 'string', minLength: 8, maxLength: 128 },
+    },
+  },
+  ChangePasswordBody: {
+    type: 'object',
+    required: ['currentPassword', 'newPassword'],
+    properties: {
+      currentPassword: { type: 'string' },
+      newPassword: { type: 'string', minLength: 8, maxLength: 128 },
+    },
+  },
+  UpdateProfileBody: {
+    type: 'object',
+    properties: { name: { type: 'string', minLength: 2, maxLength: 80 } },
+  },
+  CreatePaymentIntentBody: {
+    type: 'object',
+    required: ['amount'],
+    properties: {
+      amount: { type: 'integer', minimum: 50 },
+      currency: { type: 'string', default: 'usd' },
+      metadata: { type: 'object', additionalProperties: { type: 'string' } },
+    },
+  },
 } as const;

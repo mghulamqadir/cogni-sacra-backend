@@ -3,7 +3,9 @@ export const courseCreate = Joi.object({
   title: Joi.string().trim().min(2).max(160).required(),
   description: Joi.string().max(5000),
   thumbnailUrl: Joi.string().uri(),
-  enrollmentMode: Joi.string().valid('assigned_only', 'self_enroll').default('assigned_only'),
+  enrollmentMode: Joi.string()
+    .valid('assigned_only', 'self_enroll', 'assigned_and_self_enroll')
+    .default('assigned_only'),
   priceAmount: Joi.number().integer().min(0),
   currency: Joi.string()
     .length(3)

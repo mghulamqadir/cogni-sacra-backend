@@ -8,7 +8,7 @@ export interface ICourse {
   description?: string;
   thumbnailUrl?: string;
   status: 'draft' | 'published' | 'archived';
-  enrollmentMode: 'assigned_only' | 'self_enroll';
+  enrollmentMode: 'assigned_only' | 'self_enroll' | 'assigned_and_self_enroll';
   visibility: 'private' | 'public_requested' | 'public';
   publicApprovedBy?: Types.ObjectId;
   publishedAt?: Date;
@@ -26,7 +26,7 @@ const schema = new Schema<ICourse>(
     status: { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
     enrollmentMode: {
       type: String,
-      enum: ['assigned_only', 'self_enroll'],
+      enum: ['assigned_only', 'self_enroll', 'assigned_and_self_enroll'],
       default: 'assigned_only',
     },
     visibility: {

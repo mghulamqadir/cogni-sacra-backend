@@ -50,7 +50,7 @@ export async function selfEnroll(actor: AuthenticatedUser, courseId: string) {
   const tenant =
     actor.role === UserRole.Learner &&
     course.institutionId?.equals(actor.institutionId) &&
-    course.enrollmentMode === 'self_enroll';
+    ['self_enroll', 'assigned_and_self_enroll'].includes(course.enrollmentMode);
   if (!independent && !tenant)
     throw new AppError('Self enrollment is not allowed', 403, 'FORBIDDEN');
   if ((course.priceAmount ?? 0) > 0)
