@@ -42,6 +42,11 @@ app.use('/api/v1', router);
 
 setupSwagger(app);
 
+
+app.get('/', (_req, res) => {
+  res.redirect('/api-docs');
+});
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, message: 'Server is healthy' });
 });
