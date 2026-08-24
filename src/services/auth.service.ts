@@ -302,6 +302,14 @@ export async function resetPassword(token: string, newPassword: string): Promise
     token,
     verifyPasswordResetToken,
     async (user) => {
+      if (!Object.values(UserRole).includes(user.role)) {
+        throw new AppError(
+          `Password reset cannot be completed because this account has unsupported role "${String(user.role)}". Migrate the user's role first.`,
+          409,
+          'USER_ROLE_INVALID'
+        );
+      }
+
       const hashedPassword = await hashPassword(newPassword);
       user.password = hashedPassword;
       await user.save();
