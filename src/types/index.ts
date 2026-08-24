@@ -55,6 +55,7 @@ export interface AppEnv {
   NODE_ENV: 'development' | 'production' | 'test';
   PORT: number;
   SERVER_URL: string;
+  LOCAL_CLIENT_URL: string;
   CLIENT_URL: string;
   MONGO_URI: string;
   JWT_SECRET: string;

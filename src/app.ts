@@ -20,7 +20,8 @@ app.use(helmet());
 app.use(
   cors({
     // every URL is allowed to access the API, but credentials are allowed
-    origin: env.CLIENT_URL,
+    // allow multiple origins, but only allow credentials for the specified origin
+    origin: [env.CLIENT_URL, env.LOCAL_CLIENT_URL],
     credentials: true,
   })
 );

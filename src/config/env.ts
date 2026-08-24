@@ -17,7 +17,8 @@ export const env: AppEnv = {
     /\/$/,
     ''
   ),
-  CLIENT_URL: get('CLIENT_URL', 'http://localhost:5173'),
+  CLIENT_URL: get('CLIENT_URL', 'https://cogni-sacra-six.vercel.app'),
+  LOCAL_CLIENT_URL: get('LOCAL_CLIENT_URL', 'http://localhost:5173'),
   MONGO_URI: get('MONGO_URI'),
   JWT_SECRET: get('JWT_SECRET'),
   JWT_EXPIRES_IN: get('JWT_EXPIRES_IN', '7d'),
