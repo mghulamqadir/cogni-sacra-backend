@@ -242,6 +242,19 @@ export const swaggerSchemas = {
     type: 'object',
     properties: { name: { type: 'string', minLength: 2, maxLength: 80 } },
   },
+  OnboardingBody: {
+    type: 'object',
+    required: ['accountType'],
+    properties: {
+      accountType: { type: 'string', enum: ['learner', 'instructor'] },
+      interests: {
+        type: 'array',
+        maxItems: 20,
+        items: { type: 'string', maxLength: 100 },
+        default: [],
+      },
+    },
+  },
   CreatePaymentIntentBody: {
     type: 'object',
     required: ['amount'],

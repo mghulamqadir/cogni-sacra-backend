@@ -124,8 +124,19 @@ export const swaggerPaths = {
     patch: operation(['Auth'], 'Change password', { requestBody: body('ChangePasswordBody') }),
   },
   '/account': {
-    get: operation(['Users'], 'Get own profile'),
-    patch: operation(['Users'], 'Update own profile', { requestBody: body('UpdateProfileBody') }),
+    get: operation(['Account'], 'Get the authenticated user profile', {
+      responses: { 200: ok('Profile fetched'), 401: errors[401] },
+    }),
+    patch: operation(['Account'], 'Update the authenticated user profile', {
+      requestBody: body('UpdateProfileBody'),
+      responses: { 200: ok('Profile updated'), 401: errors[401], 422: errors[422] },
+    }),
+  },
+  '/account/onboarding': {
+    post: operation(['Account'], 'Complete onboarding for the authenticated user', {
+      requestBody: body('OnboardingBody'),
+      responses: { 200: ok('Onboarding completed successfully'), 401: errors[401], 422: errors[422] },
+    }),
   },
   '/users': {
     get: operation(['Users'], 'List all users (platform admin)', {
