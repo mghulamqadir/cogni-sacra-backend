@@ -11,7 +11,7 @@ export type {
 } from './auth.dto.js';
 
 // User DTOs
-export type { UpdateProfileDto, UserListItem, PaginatedUsers, ListUsersQuery } from './user.dto.js';
+export type { UpdateProfileDto, OnboardingDto, UserListItem, PaginatedUsers, ListUsersQuery } from './user.dto.js';
 
 // Payment DTOs
 export type { CreatePaymentIntentDto, PaymentIntentResult, PaymentDto } from './payment.dto.js';

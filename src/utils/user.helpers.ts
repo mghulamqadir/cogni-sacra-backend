@@ -12,6 +12,8 @@ type UserIdentity = {
   isEmailVerified: boolean;
   status: UserStatus;
   institutionId?: Types.ObjectId;
+  onboardingCompleted?: boolean;
+  interests?: string[];
 };
 
 type UserListIdentity = UserIdentity & {
@@ -45,6 +47,8 @@ export function toUserDto(doc: UserIdentity): UserDto {
     isEmailVerified: doc.isEmailVerified,
     status: doc.status,
     institutionId: doc.institutionId,
+    onboardingCompleted: doc.onboardingCompleted ?? false,
+    interests: doc.interests ?? [],
   };
 }
 

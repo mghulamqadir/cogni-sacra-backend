@@ -1,5 +1,6 @@
 import authRoutes from './auth.routes.js';
 import userRoutes from './user.routes.js';
+import accountRoutes from './account.routes.js';
 import paymentRoutes from './payment.routes.js';
 import mediaRoutes from './media.routes.js';
 import institutionRoutes from './institution.routes.js';
@@ -18,6 +19,7 @@ import { Router } from 'express';
 const router = Router();
 router.use('/auth', authLimiter, authRoutes);
 router.use('/users', userRoutes);
+router.use('/account', accountRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/media', mediaRoutes);
 router.use('/institutions', institutionRoutes);

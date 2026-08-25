@@ -2,11 +2,14 @@ import { User } from '../models/User.js';
 import { AppError } from '../utils/AppError.js';
 import type {
   UpdateProfileDto,
+  OnboardingDto,
+  UserDto,
   UserListItem,
   PaginatedUsers,
   ListUsersQuery,
 } from '../dtos/index.js';
-import { toUserListItem } from '../utils/user.helpers.js';
+import { toUserListItem, toUserDto } from '../utils/user.helpers.js';
+import { UserRole } from '../types/index.js';
 
 // ─── Service functions ────────────────────────────────────────────────────────
 
@@ -71,4 +74,23 @@ export async function deleteUser(userId: string): Promise<void> {
   if (user === null) {
     throw new AppError('User not found', 404);
   }
+}
+
+export async function completeOnboarding(userId: string, dto: OnboardingDto): Promise<UserDto> {
+  const user = await User.findById(userId).exec();
+
+  if (user === null) {
+    throw new AppError('User not found', 404);
+  }
+
+  if (user.onboardingCompleted) {
+    throw new AppError('Onboarding already completed', 400);
+  }
+
+  user.role = dto.accountType === 'instructor' ? UserRole.IndependentInstructor : UserRole.IndependentLearner;
+  user.interests = dto.interests;
+  user.onboardingCompleted = true;
+
+  await user.save();
+  return toUserDto(user.toObject());
 }

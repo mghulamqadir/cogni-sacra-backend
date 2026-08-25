@@ -123,7 +123,7 @@ export const swaggerPaths = {
   '/auth/change-password': {
     patch: operation(['Auth'], 'Change password', { requestBody: body('ChangePasswordBody') }),
   },
-  '/users/me': {
+  '/account': {
     get: operation(['Users'], 'Get own profile'),
     patch: operation(['Users'], 'Update own profile', { requestBody: body('UpdateProfileBody') }),
   },

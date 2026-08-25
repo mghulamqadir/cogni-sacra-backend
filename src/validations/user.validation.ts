@@ -10,3 +10,8 @@ export const listUsersQuerySchema = Joi.object({
   role: Joi.string().valid('user', 'admin'),
   search: Joi.string().trim().max(100),
 });
+
+export const onboardingSchema = Joi.object({
+  accountType: Joi.string().valid('learner', 'instructor').required(),
+  interests: Joi.array().items(Joi.string().trim().max(100)).max(20).default([]),
+});

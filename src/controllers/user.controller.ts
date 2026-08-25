@@ -2,8 +2,14 @@ import type { Request, Response } from 'express';
 import type { AuthRequest } from '../types/index.js';
 import * as userService from '../services/user.service.js';
 import { sendSuccess } from '../utils/response.js';
-import type { UpdateProfileDto, ListUsersQuery } from '../dtos/index.js';
+import type { UpdateProfileDto, OnboardingDto, ListUsersQuery } from '../dtos/index.js';
 
+export async function completeOnboarding(req: Request, res: Response): Promise<void> {
+  const { _id } = (req as AuthRequest).user;
+  const dto = req.body as OnboardingDto;
+  const user = await userService.completeOnboarding(_id.toString(), dto);
+  sendSuccess(res, 'Onboarding completed successfully', user);
+}
 export async function getProfile(req: Request, res: Response): Promise<void> {
   const { _id } = (req as AuthRequest).user;
   const user = await userService.getUserById(_id.toString());

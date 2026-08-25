@@ -6,6 +6,11 @@ export interface UpdateProfileDto {
   name?: string;
 }
 
+export interface OnboardingDto {
+  accountType: 'learner' | 'instructor';
+  interests: string[];
+}
+
 export interface ListUsersQuery {
   page: number;
   limit: number;

@@ -14,6 +14,8 @@ export interface IUser {
   status: UserStatus;
   stripeCustomerId?: string;
   isEmailVerified: boolean;
+  onboardingCompleted: boolean;
+  interests: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,6 +70,14 @@ const userSchema = new Schema<IUserDocument>(
     isEmailVerified: {
       type: Boolean,
       default: false,
+    },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    interests: {
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true }
