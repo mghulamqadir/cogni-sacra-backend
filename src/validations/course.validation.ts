@@ -6,15 +6,14 @@ export const courseCreate = Joi.object({
   enrollmentMode: Joi.string()
     .valid('assigned_only', 'self_enroll', 'assigned_and_self_enroll')
     .default('assigned_only'),
-  priceAmount: Joi.number()
-    .integer()
-    .min(0)
-    .when('currency', { is: Joi.exist(), then: Joi.required() }),
-  currency: Joi.string()
-    .length(3)
-    .uppercase()
-    .when('priceAmount', { is: Joi.exist(), then: Joi.required() }),
-});
+  priceAmount: Joi.number().integer().min(0),
+  currency: Joi.string().length(3).uppercase(),
+}).custom((value, helpers) => {
+  const hasPrice = value.priceAmount !== undefined;
+  const hasCurrency = value.currency !== undefined;
+  if (hasPrice !== hasCurrency) return helpers.error('any.custom');
+  return value;
+}).messages({ 'any.custom': 'priceAmount and currency must be provided together' });
 export const courseUpdate = courseCreate.fork(['title'], (s) => s.optional());
 export const moduleInput = Joi.object({
   title: Joi.string().trim().min(1).max(160).required(),

@@ -32,7 +32,7 @@ Course enrollment modes:
 
 Institution administrators manage the institution's members, resources, and publication approvals. Course content is created by an institutional instructor. This separation prevents administrative users from accidentally becoming course owners and keeps course-building permissions clear.
 
-Institutional users cannot register themselves. They enter through a single-use invitation link and choose their own password. Public registration sends `accountType: learner` or `accountType: instructor`; the server maps these to `independent_learner` and `independent_instructor`. Google onboarding uses the same validated account type for new accounts, while existing Google accounts retain their role.
+Institutional users cannot register themselves. They enter through a single-use invitation link and choose their own password. `POST /auth/register` creates an `independent_learner` account and accepts only `name`, `email`, `password`, and `confirmPassword`. After email verification and login, the user calls `POST /account/onboarding` with `accountType: learner` or `accountType: instructor`; the server then maps the account to `independent_learner` or `independent_instructor`. New Google accounts are also created as `independent_learner`; Google login does not accept `accountType`, and existing Google accounts retain their stored role.
 
 ## 2. Environment and startup
 
@@ -204,12 +204,15 @@ Create a text lesson with `POST /modules/{moduleId}/lessons`:
 
 Create a video lesson:
 
+For a managed video, complete the Cloudinary upload described in section 10 first. Use the verified `data.url` as `contentUrl` and `data.key` as `mediaKey`:
+
 ```json
 {
   "title": "Machine Learning Overview",
   "order": 1,
   "contentType": "video",
-  "contentUrl": "https://example.com/videos/ml-overview",
+  "contentUrl": "https://res.cloudinary.com/example/video/upload/...",
+  "mediaKey": "cogni-sacra/videos/INSTRUCTOR_USER_ID/VIDEO_ID",
   "aiContext": "This lesson explains supervised learning, unsupervised learning, training data, models, and inference."
 }
 ```
@@ -340,13 +343,24 @@ Call `POST /auth/register`:
 
 Verify the email through `GET /auth/verify-email?token=...`, log in, and authorize Swagger with the independent-learner JWT. Google login through `POST /auth/google` creates the same role.
 
+To choose the final public role, call `POST /account/onboarding` after login:
+
+```json
+{
+  "accountType": "instructor",
+  "interests": ["artificial intelligence"]
+}
+```
+
+Use `"accountType": "learner"` to remain an independent learner. Onboarding can only be completed once. The registration endpoint itself does not accept `accountType`.
+
 ### 6.4 Free public enrollment
 
 For a public course without a positive price, call `POST /courses/{id}/enroll`. Continue through the same lesson, progress, assessment, AI Tutor, and summary endpoints used by institutional learners.
 
 ### 6.5 Paid public enrollment
 
-Create the course with price in minor currency units:
+Create the course with price in minor currency units. Both pricing fields are required together:
 
 ```json
 {
@@ -363,6 +377,8 @@ After the course is public and `FEATURE_PAID_ENROLLMENT=true`, the independent l
 ```http
 POST /courses/{id}/checkout
 ```
+
+The generic payment endpoint is separate from course checkout. Authenticated users may call `POST /payments/create-intent` with `amount` (minimum 50 minor units), optional lowercase three-letter `currency` (default `usd`), and optional string metadata. Payment history is available through `GET /payments/my-payments`. These generic payment records do not enroll a learner in a course; course access is created only by the signed checkout webhook flow.
 
 Open the returned `checkoutUrl` and complete payment using Stripe test mode. Stripe must deliver `checkout.session.completed` to:
 
@@ -626,7 +642,7 @@ The frontend may hide unauthorized actions for usability, but backend authorizat
 
 ### 13.0 Independent instructor flow
 
-The registration screen presents two choices before submission: **Continue as Learner** (`accountType: learner`) and **Become an Instructor** (`accountType: instructor`). After email verification or Google login, route `independent_instructor` users to `/independent-instructor/courses`.
+The registration screen collects only name, email, password, and confirmation, so the account is initially an independent learner. After email verification and login, show the onboarding choice **Continue as Learner** or **Become an Instructor** and send the selected value to `POST /account/onboarding`. Google login creates new users as independent learners and does not accept an account type.
 
 Independent instructors use these routes:
 
@@ -666,7 +682,7 @@ The catalog calls `GET /courses/public`. Use URL query parameters for `page`, `l
 
 ### 13.2 Authentication screens
 
-`/register` is labelled **Independent learner registration**. It sends only name, email, password, and confirmation. After success, show an email-verification message; do not assume a JWT was returned.
+`/register` is labelled **Public registration**. It sends only name, email, password, and confirmation. After success, show an email-verification message; do not assume a JWT was returned. After verification and login, `/account/onboarding` accepts `accountType` (`learner` or `instructor`) and an optional interests array.
 
 `/login` stores `data.token` and `data.user`, then redirects to the role landing route or the preserved return URL.
 
@@ -726,7 +742,7 @@ Builder steps:
 
 1. **Details** — title, description, thumbnail, enrollment mode, and optional public-course price.
 2. **Curriculum** — ordered modules and lessons.
-3. **Assessments** — question editor with option validation.
+3. **Assessments** — question editor with option validation. The current service supports assessment creation only for an institutional `instructor` who owns an institution course; independent instructors and platform admins cannot currently create assessments.
 4. **Review** — completeness summary and publish action.
 5. **Distribution** — assigned-only controls or public-publication request.
 
