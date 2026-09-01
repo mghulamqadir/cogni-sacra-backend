@@ -6,7 +6,10 @@ export const courseCreate = Joi.object({
   enrollmentMode: Joi.string()
     .valid('assigned_only', 'self_enroll', 'assigned_and_self_enroll')
     .default('assigned_only'),
-  priceAmount: Joi.number().integer().min(0),
+  priceAmount: Joi.number()
+    .integer()
+    .min(0)
+    .when('currency', { is: Joi.exist(), then: Joi.required() }),
   currency: Joi.string()
     .length(3)
     .uppercase()

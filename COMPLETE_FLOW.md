@@ -174,6 +174,8 @@ Call `POST /courses`:
 
 The server derives `institutionId`, `instructorId`, and ownership. Save the returned course ID as `COURSE_ID`.
 
+`title` is required. `description`, `thumbnailUrl`, and `enrollmentMode` are optional; when omitted, `enrollmentMode` defaults to `assigned_only`. For a free course, omit both `priceAmount` and `currency`. For a paid course, provide both fields: `priceAmount` is in minor currency units and `currency` is a three-letter ISO code. Supplying only one of these pricing fields is invalid.
+
 ### 4.2 Add modules
 
 Call `POST /courses/{courseId}/modules`:

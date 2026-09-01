@@ -12,6 +12,20 @@ const roles = [
   'independent_instructor',
 ] as const;
 
+const courseProperties = {
+  title: { type: 'string', minLength: 2, maxLength: 160 },
+  description: { type: 'string', maxLength: 5000 },
+  thumbnailUrl: { type: 'string', format: 'uri' },
+  enrollmentMode: {
+    type: 'string',
+    enum: ['assigned_only', 'self_enroll', 'assigned_and_self_enroll'],
+    default: 'assigned_only',
+    description: 'Choose the enrollment mode for this course.',
+  },
+  priceAmount: { type: 'integer', minimum: 0, description: 'Price in minor currency units' },
+  currency: { type: 'string', minLength: 3, maxLength: 3, example: 'USD' },
+} as const;
+
 export const swaggerSchemas = {
   ApiResponse: {
     type: 'object',
@@ -117,20 +131,24 @@ export const swaggerSchemas = {
     type: 'object',
     additionalProperties: false,
     required: ['title'],
-    properties: {
-      title: { type: 'string', minLength: 2, maxLength: 160 },
-      description: { type: 'string', maxLength: 5000 },
-      thumbnailUrl: { type: 'string', format: 'uri' },
-      enrollmentMode: {
-        type: 'string',
-        enum: ['assigned_only', 'self_enroll', 'assigned_and_self_enroll'],
-        default: 'assigned_only',
-        description:
-          'Choose assigned_and_self_enroll to support both assignment and self-enrollment.',
-      },
-      priceAmount: { type: 'integer', minimum: 0, description: 'Price in minor currency units' },
-      currency: { type: 'string', minLength: 3, maxLength: 3, example: 'USD' },
-    },
+    properties: courseProperties,
+    description:
+      'Free courses omit priceAmount and currency. Paid courses must provide both together.',
+    oneOf: [
+      { not: { anyOf: [{ required: ['priceAmount'] }, { required: ['currency'] }] } },
+      { required: ['priceAmount', 'currency'] },
+    ],
+  },
+  CourseUpdateBody: {
+    type: 'object',
+    additionalProperties: false,
+    properties: courseProperties,
+    description:
+      'All fields are optional. Free courses omit priceAmount and currency; paid courses must provide both together.',
+    oneOf: [
+      { not: { anyOf: [{ required: ['priceAmount'] }, { required: ['currency'] }] } },
+      { required: ['priceAmount', 'currency'] },
+    ],
   },
   ModuleBody: {
     type: 'object',

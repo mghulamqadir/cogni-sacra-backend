@@ -26,6 +26,7 @@ test('text lessons reject client supplied AI context', () => {
 
 test('course price requires a three-letter currency', () => {
   assert.ok(courseCreate.validate({ title: 'Paid', priceAmount: 1000 }).error);
+  assert.ok(courseCreate.validate({ title: 'Paid', currency: 'USD' }).error);
   assert.equal(
     courseCreate.validate({ title: 'Paid', priceAmount: 1000, currency: 'USD' }).error,
     undefined

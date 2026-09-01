@@ -232,7 +232,7 @@ export const swaggerPaths = {
     get: operation(['Courses'], 'Get accessible course', { parameters: [id()] }),
     patch: operation(['Courses'], 'Update owned course', {
       parameters: [id()],
-      requestBody: body('CourseBody', false),
+      requestBody: body('CourseUpdateBody', false),
     }),
   },
   '/courses/{id}/publish': {
