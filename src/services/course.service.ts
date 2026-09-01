@@ -4,6 +4,8 @@ import { CourseModule } from '../models/Module.js';
 import { Lesson } from '../models/Lesson.js';
 import { AppError } from '../utils/AppError.js';
 import { UserRole, type AuthenticatedUser } from '../types/index.js';
+import { deleteMedia } from './media.service.js';
+import { logger } from '../utils/logger.js';
 
 const clean = (value: string): string =>
   value
@@ -11,6 +13,25 @@ const clean = (value: string): string =>
     .replace(/[#*_`>[\]()~-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+
+function assertVideoKeyBelongsToActor(actor: AuthenticatedUser, mediaKey: unknown): void {
+  if (
+    typeof mediaKey !== 'string' ||
+    !mediaKey.startsWith(`cogni-sacra/videos/${actor._id.toString()}/`)
+  )
+    throw new AppError('Invalid video media key', 400, 'INVALID_MEDIA_KEY');
+}
+
+async function removeVideoAsset(mediaKey: string | undefined): Promise<void> {
+  if (!mediaKey) return;
+  try {
+    await deleteMedia(mediaKey, 'video');
+  } catch (error) {
+    // The lesson has already been safely updated/deleted. Keep the request
+    // successful and log the orphan for an operational cleanup job.
+    logger.error('Failed to delete replaced video asset', { mediaKey, error });
+  }
+}
 async function editableCourse(actor: AuthenticatedUser, id: string) {
   const course = await Course.findById(id).exec();
   if (course === null) throw new AppError('Course not found', 404, 'NOT_FOUND');
@@ -142,6 +163,9 @@ export async function deleteModule(actor: AuthenticatedUser, id: string, confirm
   const module = await CourseModule.findById(id).exec();
   if (module === null) throw new AppError('Module not found', 404, 'NOT_FOUND');
   await editableCourse(actor, module.courseId.toString());
+  const videoKeys = (await Lesson.find({ moduleId: id }).select('mediaKey').lean())
+    .map((lesson) => lesson.mediaKey)
+    .filter((key): key is string => typeof key === 'string');
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {
@@ -151,6 +175,7 @@ export async function deleteModule(actor: AuthenticatedUser, id: string, confirm
   } finally {
     await session.endSession();
   }
+  await Promise.all(videoKeys.map((key) => removeVideoAsset(key)));
 }
 export async function addLesson(
   actor: AuthenticatedUser,
@@ -162,11 +187,14 @@ export async function addLesson(
     contentBody?: string;
     contentUrl?: string;
     aiContext?: string;
+    mediaKey?: string;
   }
 ) {
   const module = await CourseModule.findById(moduleId).lean().exec();
   if (module === null) throw new AppError('Module not found', 404, 'NOT_FOUND');
   await editableCourse(actor, module.courseId.toString());
+  if (input.contentType === 'video' && input.mediaKey !== undefined)
+    assertVideoKeyBelongsToActor(actor, input.mediaKey);
   const source = input.contentType === 'text' ? input.contentBody : input.aiContext;
   return Lesson.create({
     ...input,
@@ -184,14 +212,24 @@ export async function updateLesson(
   const lesson = await Lesson.findById(id).exec();
   if (lesson === null) throw new AppError('Lesson not found', 404, 'NOT_FOUND');
   await editableCourse(actor, lesson.courseId.toString());
+  const oldMediaKey = lesson.mediaKey;
+  const oldContentUrl = lesson.contentUrl;
   lesson.set(input);
+  if (lesson.contentType === 'video' && lesson.mediaKey !== undefined)
+    assertVideoKeyBelongsToActor(actor, lesson.mediaKey);
+  if (lesson.contentType === 'video' && oldMediaKey && input.contentUrl !== undefined && input.contentUrl !== oldContentUrl && input.mediaKey === undefined)
+    throw new AppError('mediaKey is required when replacing a video', 422, 'MEDIA_KEY_REQUIRED');
+  if (lesson.contentType !== 'video') lesson.mediaKey = undefined;
   const source = lesson.contentType === 'text' ? lesson.contentBody : lesson.aiContext;
   lesson.plainTextForAI = clean(source ?? '');
-  return lesson.save();
+  const saved = await lesson.save();
+  if (oldMediaKey && oldMediaKey !== saved.mediaKey) await removeVideoAsset(oldMediaKey);
+  return saved;
 }
 export async function deleteLesson(actor: AuthenticatedUser, id: string) {
   const lesson = await Lesson.findById(id).lean();
   if (lesson === null) throw new AppError('Lesson not found', 404, 'NOT_FOUND');
   await editableCourse(actor, lesson.courseId.toString());
   await Lesson.deleteOne({ _id: id });
+  await removeVideoAsset(lesson.mediaKey);
 }

@@ -10,9 +10,6 @@ import {
   courseCreate,
   courseUpdate,
   moduleInput,
-  moduleUpdate,
-  lessonInput,
-  lessonUpdate,
   catalogQuery,
 } from '../validations/course.validation.js';
 const r = Router();

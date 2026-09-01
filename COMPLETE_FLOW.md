@@ -418,7 +418,16 @@ Authenticated users can upload supported files through:
 - `POST /media/image` using multipart field `image`
 - `POST /media/video` using multipart field `video`
 
-Use the returned Cloudinary URL in course thumbnails, lesson URLs, or library resources as applicable. Upload middleware enforces configured MIME type and size restrictions.
+The multipart video endpoint is intended for small videos only (currently 100 MB) because the API buffers the file in memory. For large videos, use the production upload flow:
+
+1. Call `POST /media/video/upload-signature` with an instructor/admin JWT.
+2. Upload directly from the browser to the returned Cloudinary `uploadUrl` using the returned signed fields. Use Cloudinary's chunked upload support and the returned `chunkSizeBytes`; do not send the 1–2 GB file through this API.
+3. After Cloudinary reports success, call `POST /media/video/complete` with `{ "publicId": "..." }`.
+4. Use the verified `data.url` as the lesson `contentUrl` and `data.key` as the lesson `mediaKey`.
+
+When replacing a video, send both the new `contentUrl` and new `mediaKey` in the lesson update. The backend saves the new lesson first and then deletes the previous Cloudinary asset. If the upload or lesson update fails, the previous video remains available. Deleting a lesson also removes its managed video asset.
+
+The signature creates a unique user-scoped asset path, expires through Cloudinary's timestamp rules, and the completion endpoint verifies that the asset is a video owned by the requesting user's upload path. The configured default maximum is 2 GiB (`VIDEO_UPLOAD_MAX_BYTES=2147483648`) and the default chunk size is 20 MiB (`VIDEO_UPLOAD_CHUNK_SIZE_BYTES=20971520`). Upload middleware enforces MIME type restrictions on the legacy multipart endpoint.
 
 ## 10. Required negative tests
 

@@ -6,6 +6,8 @@ import { AppError } from '../utils/AppError.js';
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const MAX_IMAGE_SIZE_MB = 5;
+// This endpoint intentionally remains a small, API-proxied upload. Large videos
+// use the signed direct-to-Cloudinary flow in media.routes.ts instead.
 const MAX_VIDEO_SIZE_MB = 100;
 
 const storage = multer.memoryStorage();

@@ -30,6 +30,7 @@ export const lessonInput = Joi.object({
   contentUrl: Joi.string()
     .uri()
     .when('contentType', { is: 'text', then: Joi.forbidden(), otherwise: Joi.required() }),
+  mediaKey: Joi.string().trim().max(300),
   aiContext: Joi.string()
     .min(1)
     .when('contentType', { is: 'text', then: Joi.forbidden(), otherwise: Joi.required() }),

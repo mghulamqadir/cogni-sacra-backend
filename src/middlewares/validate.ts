@@ -31,7 +31,11 @@ export function validateQuery(schema: Schema) {
       return next(new AppError(message, 422));
     }
 
-    req.query = value as Record<string, string>;
+    // Express 5 exposes req.query through a read-only getter. Mutate the
+    // existing parsed object instead of assigning to the getter.
+    const query = req.query as Record<string, unknown>;
+    for (const key of Object.keys(query)) delete query[key];
+    Object.assign(query, value as Record<string, unknown>);
     next();
   };
 }

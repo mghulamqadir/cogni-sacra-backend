@@ -151,6 +151,10 @@ export const swaggerSchemas = {
       contentType: { type: 'string', enum: ['text', 'video', 'link'] },
       contentBody: { type: 'string', description: 'Required only for text lessons' },
       contentUrl: { type: 'string', format: 'uri', description: 'Required for video/link lessons' },
+      mediaKey: {
+        type: 'string',
+        description: 'Verified Cloudinary video key returned by /media/video/complete',
+      },
       aiContext: {
         type: 'string',
         description: 'Required grounding transcript/summary for video/link lessons',

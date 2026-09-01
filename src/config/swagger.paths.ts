@@ -431,6 +431,29 @@ export const swaggerPaths = {
       responses: { 200: ok() },
     },
   },
+  '/media/video/upload-signature': {
+    post: operation(['Media'], 'Create a signed direct video upload session', {
+      responses: { 200: ok(), ...errors },
+    }),
+  },
+  '/media/video/complete': {
+    post: operation(['Media'], 'Verify a completed direct video upload', {
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['publicId'],
+              properties: { publicId: { type: 'string' } },
+            },
+          },
+        },
+      },
+      responses: { 200: ok(), ...errors },
+    }),
+  },
   '/ready': {
     get: {
       tags: ['Health'],

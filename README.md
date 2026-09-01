@@ -234,8 +234,8 @@ Stripe integration for secure payment handling
 Cloudinary integration for image and video uploads
 
 - Image optimization using Sharp
-- Image uploads up to 5 MB and video uploads up to 100 MB
-- Secure file upload middleware
+- Image uploads up to 5 MB and legacy multipart video uploads up to 100 MB
+- Signed, direct-to-Cloudinary, chunked uploads for videos up to the configured 2 GiB limit
 
 ### Error Handling
 

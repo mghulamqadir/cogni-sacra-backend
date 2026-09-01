@@ -9,6 +9,11 @@ function get(key: keyof AppEnv, fallback?: string): string {
 }
 
 const boolean = (value: string): boolean => value === 'true';
+const positiveNumber = (key: keyof AppEnv, fallback: string): number => {
+  const value = Number(get(key, fallback));
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${key} must be a positive integer`);
+  return value;
+};
 
 export const env: AppEnv = {
   NODE_ENV: (process.env['NODE_ENV'] ?? 'development') as AppEnv['NODE_ENV'],
@@ -37,6 +42,11 @@ export const env: AppEnv = {
   AI_TUTOR_MAX_CONTEXT_TOKENS: Number(get('AI_TUTOR_MAX_CONTEXT_TOKENS', '6000')),
   AI_TUTOR_MAX_QUESTION_CHARS: Number(get('AI_TUTOR_MAX_QUESTION_CHARS', '2000')),
   AI_TUTOR_RATE_LIMIT_PER_HOUR: Number(get('AI_TUTOR_RATE_LIMIT_PER_HOUR', '30')),
+  VIDEO_UPLOAD_MAX_BYTES: positiveNumber('VIDEO_UPLOAD_MAX_BYTES', String(2 * 1024 ** 3)),
+  VIDEO_UPLOAD_CHUNK_SIZE_BYTES: positiveNumber(
+    'VIDEO_UPLOAD_CHUNK_SIZE_BYTES',
+    String(20 * 1024 ** 2)
+  ),
   FEATURE_VIRTUAL_LIBRARY: boolean(get('FEATURE_VIRTUAL_LIBRARY', 'false')),
   FEATURE_PAID_ENROLLMENT: boolean(get('FEATURE_PAID_ENROLLMENT', 'false')),
   LOG_LEVEL: get('LOG_LEVEL', 'info'),

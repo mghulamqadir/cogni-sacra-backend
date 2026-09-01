@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { validate, validateQuery } from '../middlewares/validate.js';
+import { validateQuery } from '../middlewares/validate.js';
 import { authenticate, authorizeRoles } from '../middlewares/authenticate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { UserRole } from '../types/index.js';

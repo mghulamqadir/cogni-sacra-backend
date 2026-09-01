@@ -14,6 +14,7 @@ export interface ILesson {
   contentType: 'text' | 'video' | 'link';
   contentBody?: string;
   contentUrl?: string;
+  mediaKey?: string;
   aiContext?: string;
   plainTextForAI: string;
   resources: Resource[];
@@ -37,6 +38,7 @@ const schema = new Schema<ILesson>(
     contentType: { type: String, enum: ['text', 'video', 'link'], required: true },
     contentBody: String,
     contentUrl: String,
+    mediaKey: String,
     aiContext: String,
     plainTextForAI: { type: String, required: true },
     resources: { type: [resource], default: [] },
