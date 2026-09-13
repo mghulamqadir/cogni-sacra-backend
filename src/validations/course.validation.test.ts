@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { courseCreate, lessonInput } from './course.validation.js';
+import { courseCreate, instructorCourseQuery, lessonInput } from './course.validation.js';
 
 test('video and link lessons require AI grounding context', () => {
   const result = lessonInput.validate({
@@ -31,4 +31,11 @@ test('course price requires a three-letter currency', () => {
     courseCreate.validate({ title: 'Paid', priceAmount: 1000, currency: 'USD' }).error,
     undefined
   );
+});
+
+test('instructor course query validates filters and pagination', () => {
+  const valid = instructorCourseQuery.validate({ page: 2, limit: 10, status: 'draft', visibility: 'private' });
+  assert.equal(valid.error, undefined);
+  assert.equal(instructorCourseQuery.validate({ status: 'deleted' }).error !== undefined, true);
+  assert.equal(instructorCourseQuery.validate({ limit: 101 }).error !== undefined, true);
 });

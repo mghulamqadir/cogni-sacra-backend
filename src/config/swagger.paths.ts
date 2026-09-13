@@ -228,6 +228,22 @@ export const swaggerPaths = {
       responses: { 201: ok(), ...errors },
     }),
   },
+  '/courses/bulk': {
+    post: operation(['Courses'], 'Create a complete course with modules and lessons', {
+      requestBody: body('BulkCourseBody'),
+      responses: { 201: ok(), ...errors },
+    }),
+  },
+  '/instructor/courses': {
+    get: operation(['Courses'], 'List courses owned by the authenticated instructor', {
+      parameters: [
+        ...paging,
+        { name: 'search', in: 'query', schema: { type: 'string', maxLength: 100 } },
+        { name: 'status', in: 'query', schema: { type: 'string', enum: ['draft', 'published', 'archived'] } },
+        { name: 'visibility', in: 'query', schema: { type: 'string', enum: ['private', 'public_requested', 'public'] } },
+      ],
+    }),
+  },
   '/courses/{id}': {
     get: operation(['Courses'], 'Get accessible course', { parameters: [id()] }),
     patch: operation(['Courses'], 'Update owned course', {
@@ -301,6 +317,12 @@ export const swaggerPaths = {
   '/lessons/{id}/complete': {
     post: operation(['Learning'], 'Complete lesson and recalculate progress', {
       parameters: [id()],
+    }),
+  },
+  '/lessons/{id}/video-progress': {
+    post: operation(['Learning'], 'Complete a YouTube lesson after 90% playback', {
+      parameters: [id()],
+      requestBody: body('VideoProgressBody'),
     }),
   },
   '/learner/courses/{courseId}/progress': {

@@ -2,6 +2,7 @@ import { Schema, model, type Types } from 'mongoose';
 interface Resource {
   name: string;
   fileUrl: string;
+  fileKey?: string;
   mimeType?: string;
   size?: number;
 }
@@ -11,10 +12,12 @@ export interface ILesson {
   moduleId: Types.ObjectId;
   title: string;
   order: number;
-  contentType: 'text' | 'video' | 'link';
+  contentType: 'text' | 'video' | 'link' | 'youtube';
   contentBody?: string;
   contentUrl?: string;
   mediaKey?: string;
+  videoId?: string;
+  embedUrl?: string;
   aiContext?: string;
   plainTextForAI: string;
   resources: Resource[];
@@ -23,6 +26,7 @@ const resource = new Schema<Resource>(
   {
     name: { type: String, required: true },
     fileUrl: { type: String, required: true },
+    fileKey: String,
     mimeType: String,
     size: Number,
   },
@@ -35,10 +39,12 @@ const schema = new Schema<ILesson>(
     moduleId: { type: Schema.Types.ObjectId, ref: 'Module', required: true },
     title: { type: String, required: true },
     order: { type: Number, min: 0, required: true },
-    contentType: { type: String, enum: ['text', 'video', 'link'], required: true },
+    contentType: { type: String, enum: ['text', 'video', 'link', 'youtube'], required: true },
     contentBody: String,
     contentUrl: String,
     mediaKey: String,
+    videoId: String,
+    embedUrl: String,
     aiContext: String,
     plainTextForAI: { type: String, required: true },
     resources: { type: [resource], default: [] },

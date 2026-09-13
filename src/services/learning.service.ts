@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import type { Types } from 'mongoose';
 import { Course } from '../models/Course.js';
 import { Enrollment } from '../models/Enrollment.js';
 import { Lesson } from '../models/Lesson.js';
@@ -74,9 +75,13 @@ export async function getLesson(actor: AuthenticatedUser, courseId: string, less
   if (lesson === null) throw new AppError('Lesson not found', 404, 'NOT_FOUND');
   return lesson;
 }
-export async function completeLesson(actor: AuthenticatedUser, lessonId: string) {
-  const lesson = await Lesson.findById(lessonId).lean();
-  if (lesson === null) throw new AppError('Lesson not found', 404, 'NOT_FOUND');
+type ProgressLesson = {
+  _id: Types.ObjectId;
+  courseId: Types.ObjectId;
+  institutionId?: Types.ObjectId;
+};
+
+async function markLessonComplete(actor: AuthenticatedUser, lesson: ProgressLesson) {
   const e = await enrollment(actor._id.toString(), lesson.courseId.toString());
   await LessonProgress.findOneAndUpdate(
     { enrollmentId: e._id, lessonId },
@@ -99,6 +104,27 @@ export async function completeLesson(actor: AuthenticatedUser, lessonId: string)
   if (e.status === 'completed') e.completedAt ??= new Date();
   await e.save();
   return e;
+}
+export async function completeLesson(actor: AuthenticatedUser, lessonId: string) {
+  const lesson = await Lesson.findById(lessonId).lean();
+  if (lesson === null) throw new AppError('Lesson not found', 404, 'NOT_FOUND');
+  if (lesson.contentType === 'youtube')
+    throw new AppError('YouTube lessons are completed through video progress', 422, 'VIDEO_PROGRESS_REQUIRED');
+  return markLessonComplete(actor, lesson);
+}
+export async function recordVideoProgress(
+  actor: AuthenticatedUser,
+  lessonId: string,
+  watchedSeconds: number,
+  durationSeconds: number
+) {
+  const lesson = await Lesson.findById(lessonId).lean();
+  if (lesson === null) throw new AppError('Lesson not found', 404, 'NOT_FOUND');
+  if (lesson.contentType !== 'youtube')
+    throw new AppError('Lesson is not a YouTube video', 422, 'INVALID_VIDEO_LESSON');
+  if (watchedSeconds / durationSeconds < 0.9)
+    throw new AppError('Watch at least 90% of the video before completing this lesson', 422, 'VIDEO_INCOMPLETE');
+  return markLessonComplete(actor, lesson);
 }
 export async function progress(actor: AuthenticatedUser, courseId: string) {
   const e = await enrollment(actor._id.toString(), courseId);

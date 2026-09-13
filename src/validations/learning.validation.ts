@@ -19,3 +19,7 @@ export const assessmentSchema = Joi.object({
 export const submitSchema = Joi.object({
   answers: Joi.array().items(Joi.number().integer().min(0)).required(),
 });
+export const videoProgressSchema = Joi.object({
+  watchedSeconds: Joi.number().min(0).required(),
+  durationSeconds: Joi.number().greater(0).required(),
+});

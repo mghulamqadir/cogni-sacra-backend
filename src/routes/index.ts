@@ -12,6 +12,7 @@ import aiTutorRoutes from './ai-tutor.routes.js';
 import checkoutRoutes from './checkout.routes.js';
 import libraryRoutes from './library.routes.js';
 import analyticsRoutes from './analytics.routes.js';
+import instructorRoutes from './instructor.routes.js';
 import { authLimiter } from '../utils/rateLimit.js';
 
 import { Router } from 'express';
@@ -29,6 +30,7 @@ router.use('/lessons', lessonRoutes);
 router.use('/', learningRoutes);
 router.use('/courses', aiTutorRoutes);
 router.use('/courses', checkoutRoutes);
+router.use('/instructor', instructorRoutes);
 router.use('/library', libraryRoutes);
 router.use('/', analyticsRoutes);
 

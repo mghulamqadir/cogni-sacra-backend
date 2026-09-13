@@ -2,10 +2,12 @@ import mongoose from 'mongoose';
 import { Course } from '../models/Course.js';
 import { CourseModule } from '../models/Module.js';
 import { Lesson } from '../models/Lesson.js';
+import { Enrollment } from '../models/Enrollment.js';
 import { AppError } from '../utils/AppError.js';
 import { UserRole, type AuthenticatedUser } from '../types/index.js';
 import { deleteMedia } from './media.service.js';
 import { logger } from '../utils/logger.js';
+import { isYouTubeUrl, parseYouTubeUrl } from '../utils/youtube.js';
 
 const clean = (value: string): string =>
   value
@@ -21,6 +23,21 @@ function assertVideoKeyBelongsToActor(actor: AuthenticatedUser, mediaKey: unknow
   )
     throw new AppError('Invalid video media key', 400, 'INVALID_MEDIA_KEY');
 }
+
+function normalizeLessonContent(input: any): any {
+  if (input.contentType !== 'link' || typeof input.contentUrl !== 'string')
+    return input;
+  const youtube = parseYouTubeUrl(input.contentUrl);
+  if (isYouTubeUrl(input.contentUrl) && !youtube)
+    throw new AppError(
+      'Invalid YouTube URL. Use a YouTube watch, short, embed, live, or youtu.be video link.',
+      422,
+      'INVALID_YOUTUBE_URL'
+    );
+  return youtube ? { ...input, contentType: 'youtube', ...youtube } : { ...input, videoId: undefined, embedUrl: undefined };
+}
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 async function removeVideoAsset(mediaKey: string | undefined): Promise<void> {
   if (!mediaKey) return;
@@ -59,6 +76,149 @@ export async function createCourse(actor: AuthenticatedUser, input: Record<strin
       : undefined,
     createdBy: actor._id,
   });
+}
+
+export async function instructorCourses(
+  actor: AuthenticatedUser,
+  query: {
+    page: number;
+    limit: number;
+    search?: string;
+    status?: 'draft' | 'published' | 'archived';
+    visibility?: 'private' | 'public_requested' | 'public';
+  }
+) {
+  if (![UserRole.Instructor, UserRole.IndependentInstructor].includes(actor.role))
+    throw new AppError('Forbidden', 403, 'FORBIDDEN');
+
+  // Express query parameters are strings at runtime even after validation in
+  // some Express 5 configurations. Aggregation stages require numeric values.
+  const page = Number(query.page ?? 1);
+  const limit = Number(query.limit ?? 20);
+  if (
+    !Number.isSafeInteger(page) ||
+    page < 1 ||
+    !Number.isSafeInteger(limit) ||
+    limit < 1 ||
+    limit > 100
+  )
+    throw new AppError('Invalid pagination values', 422, 'VALIDATION_ERROR');
+
+  const filter: Record<string, unknown> = { instructorId: actor._id };
+  if (actor.role === UserRole.Instructor) filter.institutionId = actor.institutionId;
+  else filter.institutionId = { $exists: false };
+  if (query.status) filter.status = query.status;
+  if (query.visibility) filter.visibility = query.visibility;
+  if (query.search) {
+    const pattern = new RegExp(escapeRegex(query.search), 'i');
+    filter.$or = [{ title: pattern }, { description: pattern }];
+  }
+
+  const [courses, total] = await Promise.all([
+    Course.aggregate([
+      { $match: filter },
+      { $sort: { updatedAt: -1, _id: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: CourseModule.collection.name,
+          let: { courseId: '$_id' },
+          pipeline: [{ $match: { $expr: { $eq: ['$courseId', '$$courseId'] } } }, { $count: 'count' }],
+          as: 'moduleStats',
+        },
+      },
+      {
+        $lookup: {
+          from: Lesson.collection.name,
+          let: { courseId: '$_id' },
+          pipeline: [{ $match: { $expr: { $eq: ['$courseId', '$$courseId'] } } }, { $count: 'count' }],
+          as: 'lessonStats',
+        },
+      },
+      {
+        $lookup: {
+          from: Enrollment.collection.name,
+          let: { courseId: '$_id' },
+          pipeline: [{ $match: { $expr: { $eq: ['$courseId', '$$courseId'] } } }, { $count: 'count' }],
+          as: 'enrollmentStats',
+        },
+      },
+      {
+        $project: {
+          title: 1,
+          description: 1,
+          thumbnailUrl: 1,
+          status: 1,
+          visibility: 1,
+          enrollmentMode: 1,
+          priceAmount: 1,
+          currency: 1,
+          publishedAt: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          moduleCount: { $ifNull: [{ $arrayElemAt: ['$moduleStats.count', 0] }, 0] },
+          lessonCount: { $ifNull: [{ $arrayElemAt: ['$lessonStats.count', 0] }, 0] },
+          enrollmentCount: { $ifNull: [{ $arrayElemAt: ['$enrollmentStats.count', 0] }, 0] },
+        },
+      },
+    ]).exec(),
+    Course.countDocuments(filter),
+  ]);
+  return { courses, total, page, totalPages: Math.ceil(total / limit) };
+}
+
+export async function createBulkCourse(actor: AuthenticatedUser, input: any) {
+  if (![UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor].includes(actor.role))
+    throw new AppError('Forbidden', 403, 'FORBIDDEN');
+
+  const modules = input.modules as any[];
+  const videoPrefix = `cogni-sacra/videos/${actor._id.toString()}/`;
+  const documentPrefix = `cogni-sacra/documents/${actor._id.toString()}/`;
+  for (let mi = 0; mi < modules.length; mi += 1) {
+    const lessonOrders = new Set<number>();
+    for (let li = 0; li < modules[mi].lessons.length; li += 1) {
+      const lesson = normalizeLessonContent(modules[mi].lessons[li]);
+      modules[mi].lessons[li] = lesson;
+      if (lessonOrders.has(lesson.order))
+        throw new AppError(`Duplicate lesson order at modules[${mi}].lessons[${li}].order`, 422, 'VALIDATION_ERROR');
+      lessonOrders.add(lesson.order);
+      if (lesson.contentType === 'video' && (!lesson.mediaKey || !lesson.mediaKey.startsWith(videoPrefix)))
+        throw new AppError(`Invalid video media key at modules[${mi}].lessons[${li}].mediaKey`, 422, 'INVALID_MEDIA_KEY');
+      for (let ri = 0; ri < (lesson.resources ?? []).length; ri += 1) {
+        const resource = lesson.resources[ri];
+        if (!resource.fileKey.startsWith(documentPrefix))
+          throw new AppError(`Invalid document key at modules[${mi}].lessons[${li}].resources[${ri}].fileKey`, 422, 'INVALID_MEDIA_KEY');
+      }
+    }
+  }
+  if (new Set(modules.map((m) => m.order)).size !== modules.length)
+    throw new AppError('Duplicate module order', 422, 'VALIDATION_ERROR');
+
+  const session = await mongoose.startSession();
+  try {
+    let result: unknown;
+    await session.withTransaction(async () => {
+      const course = await Course.create([{
+        ...input,
+        modules: undefined,
+        institutionId: actor.role === UserRole.Instructor ? actor.institutionId : undefined,
+        instructorId: [UserRole.Instructor, UserRole.IndependentInstructor].includes(actor.role) ? actor._id : undefined,
+        createdBy: actor._id,
+      }], { session });
+      const createdModules = await CourseModule.create(modules.map(({ lessons: _lessons, ...module }) => ({ ...module, courseId: course[0]._id, institutionId: course[0].institutionId })), { session });
+      const lessonDocs = modules.flatMap((module, index) => module.lessons.map((lesson: any) => ({
+        ...lesson,
+        moduleId: createdModules[index]._id,
+        courseId: course[0]._id,
+        institutionId: course[0].institutionId,
+        plainTextForAI: clean(lesson.contentType === 'text' ? lesson.contentBody : lesson.aiContext),
+      })));
+      const lessons = await Lesson.create(lessonDocs, { session });
+      result = { course: course[0], modules: createdModules, lessons };
+    });
+    return result;
+  } finally { await session.endSession(); }
 }
 export async function updateCourse(
   actor: AuthenticatedUser,
@@ -195,9 +355,10 @@ export async function addLesson(
   await editableCourse(actor, module.courseId.toString());
   if (input.contentType === 'video' && input.mediaKey !== undefined)
     assertVideoKeyBelongsToActor(actor, input.mediaKey);
-  const source = input.contentType === 'text' ? input.contentBody : input.aiContext;
+  const normalized = normalizeLessonContent(input);
+  const source = normalized.contentType === 'text' ? normalized.contentBody : normalized.aiContext;
   return Lesson.create({
-    ...input,
+    ...normalized,
     moduleId,
     courseId: module.courseId,
     institutionId: module.institutionId,
@@ -215,6 +376,10 @@ export async function updateLesson(
   const oldMediaKey = lesson.mediaKey;
   const oldContentUrl = lesson.contentUrl;
   lesson.set(input);
+  lesson.set(normalizeLessonContent({
+    contentType: lesson.contentType,
+    contentUrl: lesson.contentUrl,
+  }));
   if (lesson.contentType === 'video' && lesson.mediaKey !== undefined)
     assertVideoKeyBelongsToActor(actor, lesson.mediaKey);
   if (lesson.contentType === 'video' && oldMediaKey && input.contentUrl !== undefined && input.contentUrl !== oldContentUrl && input.mediaKey === undefined)

@@ -150,6 +150,24 @@ export const swaggerSchemas = {
       { required: ['priceAmount', 'currency'] },
     ],
   },
+  BulkCourseBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['title', 'modules'],
+    properties: {
+      ...courseProperties,
+      modules: {
+        type: 'array',
+        minItems: 1,
+        items: {
+          allOf: [
+            { $ref: '#/components/schemas/ModuleBody' },
+            { type: 'object', properties: { lessons: { type: 'array', minItems: 1, items: { $ref: '#/components/schemas/LessonBody' } } }, required: ['lessons'] },
+          ],
+        },
+      },
+    },
+  },
   ModuleBody: {
     type: 'object',
     additionalProperties: false,
@@ -166,7 +184,7 @@ export const swaggerSchemas = {
     properties: {
       title: { type: 'string', maxLength: 160 },
       order: { type: 'integer', minimum: 0 },
-      contentType: { type: 'string', enum: ['text', 'video', 'link'] },
+      contentType: { type: 'string', enum: ['text', 'video', 'link'], description: 'A valid YouTube URL supplied as a link is returned as contentType youtube.' },
       contentBody: { type: 'string', description: 'Required only for text lessons' },
       contentUrl: { type: 'string', format: 'uri', description: 'Required for video/link lessons' },
       mediaKey: {
@@ -184,6 +202,15 @@ export const swaggerSchemas = {
     additionalProperties: false,
     required: ['learnerId'],
     properties: { learnerId: id },
+  },
+  VideoProgressBody: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['watchedSeconds', 'durationSeconds'],
+    properties: {
+      watchedSeconds: { type: 'number', minimum: 0 },
+      durationSeconds: { type: 'number', exclusiveMinimum: 0 },
+    },
   },
   AssessmentBody: {
     type: 'object',

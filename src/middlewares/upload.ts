@@ -5,6 +5,7 @@ import { AppError } from '../utils/AppError.js';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+const ALLOWED_DOCUMENT_TYPES = ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 const MAX_IMAGE_SIZE_MB = 5;
 // This endpoint intentionally remains a small, API-proxied upload. Large videos
 // use the signed direct-to-Cloudinary flow in media.routes.ts instead.
@@ -46,4 +47,13 @@ export const uploadVideo = multer({
   storage,
   fileFilter: videoFileFilter,
   limits: { fileSize: MAX_VIDEO_SIZE_MB * 1024 * 1024 },
+});
+
+export const uploadDocument = multer({
+  storage,
+  fileFilter: (_req, file, cb) => {
+    if (ALLOWED_DOCUMENT_TYPES.includes(file.mimetype)) cb(null, true);
+    else cb(new AppError('Only PDF, TXT, DOC, and DOCX documents are allowed', 400));
+  },
+  limits: { fileSize: 25 * 1024 * 1024 },
 });

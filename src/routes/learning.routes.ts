@@ -10,6 +10,7 @@ import {
   assignSchema,
   assessmentSchema,
   submitSchema,
+  videoProgressSchema,
 } from '../validations/learning.validation.js';
 const r = Router();
 r.use(authenticate, institutionScope);
@@ -24,6 +25,7 @@ r.post('/courses/:id/enroll', learners, asyncHandler(c.enroll));
 r.get('/learner/courses', learners, asyncHandler(c.courses));
 r.get('/courses/:courseId/lessons/:lessonId', learners, asyncHandler(c.lesson));
 r.post('/lessons/:id/complete', learners, asyncHandler(c.complete));
+r.post('/lessons/:id/video-progress', learners, validate(videoProgressSchema), asyncHandler(c.videoProgress));
 r.get('/learner/courses/:courseId/progress', learners, asyncHandler(c.progress));
 r.post(
   '/courses/:courseId/assessments',

@@ -19,6 +19,13 @@ export async function lesson(r: Request, x: Response) {
 export async function complete(r: Request, x: Response) {
   sendSuccess(x, 'Lesson completed', await s.completeLesson(a(r), p(r, 'id')));
 }
+export async function videoProgress(r: Request, x: Response) {
+  sendSuccess(
+    x,
+    'Video progress recorded',
+    await s.recordVideoProgress(a(r), p(r, 'id'), r.body.watchedSeconds, r.body.durationSeconds)
+  );
+}
 export async function progress(r: Request, x: Response) {
   sendSuccess(x, 'Progress fetched', await s.progress(a(r), p(r, 'courseId')));
 }

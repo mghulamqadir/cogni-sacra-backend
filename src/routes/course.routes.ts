@@ -11,47 +11,54 @@ import {
   courseUpdate,
   moduleInput,
   catalogQuery,
+  bulkCourseCreate,
 } from '../validations/course.validation.js';
-const r = Router();
-r.get('/public', validateQuery(catalogQuery), asyncHandler(c.catalog));
-r.use(authenticate, institutionScope);
-r.post(
+const router = Router();
+router.get('/public', validateQuery(catalogQuery), asyncHandler(c.catalog));
+router.use(authenticate, institutionScope);
+router.post(
+  '/bulk',
+  authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
+  validate(bulkCourseCreate),
+  asyncHandler(c.bulkCreate)
+);
+router.post(
   '/',
   authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
   validate(courseCreate),
   asyncHandler(c.create)
 );
-r.get('/:id', asyncHandler(c.get));
-r.patch(
+router.get('/:id', asyncHandler(c.get));
+router.patch(
   '/:id',
   authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
   validate(courseUpdate),
   asyncHandler(c.update)
 );
-r.post(
+router.post(
   '/:id/publish',
   authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
   asyncHandler(c.publish)
 );
-r.post(
+router.post(
   '/:id/archive',
   authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
   asyncHandler(c.archive)
 );
-r.post(
+router.post(
   '/:id/request-publication',
   authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
   asyncHandler(c.requestPublic)
 );
-r.post(
+router.post(
   '/:id/approve-publication',
   authorize(UserRole.InstitutionAdmin),
   asyncHandler(c.approvePublic)
 );
-r.post(
+router.post(
   '/:courseId/modules',
   authorize(UserRole.PlatformAdmin, UserRole.Instructor, UserRole.IndependentInstructor),
   validate(moduleInput),
   asyncHandler(c.addModule)
 );
-export default r;
+export default router;

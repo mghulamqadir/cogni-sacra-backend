@@ -22,6 +22,12 @@ export async function uploadVideo(req: Request, res: Response): Promise<void> {
   sendCreated(res, 'Video uploaded', result);
 }
 
+export async function uploadDocument(req: Request, res: Response): Promise<void> {
+  if (req.file === undefined) throw new AppError('No file provided', 400);
+  const result = await mediaService.uploadDocument((req as AuthRequest).user, req.file);
+  sendCreated(res, 'Document uploaded', result);
+}
+
 export async function createVideoUploadSignature(req: Request, res: Response): Promise<void> {
   const actor = (req as AuthRequest).user;
   sendSuccess(

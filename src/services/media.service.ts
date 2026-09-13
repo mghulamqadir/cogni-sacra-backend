@@ -81,6 +81,19 @@ export async function uploadVideo(
   return { url: result.secure_url, key: result.public_id };
 }
 
+export async function uploadDocument(
+  actor: AuthenticatedUser,
+  file: NonNullable<Request['file']>
+): Promise<UploadResult> {
+  const result = await uploadBuffer(file.buffer, {
+    resource_type: 'raw',
+    folder: `cogni-sacra/documents/${actor._id.toString()}`,
+    public_id: uuidv4(),
+    use_filename: false,
+  });
+  return { url: result.secure_url, key: result.public_id };
+}
+
 /**
  * Creates signed parameters for the client to upload directly to Cloudinary.
  * The API never buffers the video or handles its bytes.

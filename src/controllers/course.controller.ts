@@ -7,6 +7,9 @@ const p = (r: Request, k: string) => String(r.params[k] ?? '');
 export async function create(r: Request, x: Response) {
   sendCreated(x, 'Course created', await s.createCourse(actor(r), r.body));
 }
+export async function bulkCreate(r: Request, x: Response) {
+  sendCreated(x, 'Course content created', await s.createBulkCourse(actor(r), r.body));
+}
 export async function get(r: Request, x: Response) {
   sendSuccess(x, 'Course fetched', await s.getCourse((r as Partial<AuthRequest>).user, p(r, 'id')));
 }
@@ -27,6 +30,9 @@ export async function approvePublic(r: Request, x: Response) {
 }
 export async function catalog(r: Request, x: Response) {
   sendSuccess(x, 'Public courses fetched', await s.publicCatalog(r.query as never));
+}
+export async function mine(r: Request, x: Response) {
+  sendSuccess(x, 'Instructor courses fetched', await s.instructorCourses(actor(r), r.query as never));
 }
 export async function addModule(r: Request, x: Response) {
   sendCreated(x, 'Module created', await s.addModule(actor(r), p(r, 'courseId'), r.body));
