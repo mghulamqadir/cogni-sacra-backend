@@ -40,7 +40,7 @@ const schema = new Schema<ILesson>(
     title: { type: String, required: true },
     order: { type: Number, min: 0, required: true },
     contentType: { type: String, enum: ['text', 'video', 'link', 'youtube'], required: true },
-    contentBody: String,
+    contentBody: { type: String, maxlength: 100 * 1024 },
     contentUrl: String,
     mediaKey: String,
     videoId: String,

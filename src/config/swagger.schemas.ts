@@ -185,7 +185,11 @@ export const swaggerSchemas = {
       title: { type: 'string', maxLength: 160 },
       order: { type: 'integer', minimum: 0 },
       contentType: { type: 'string', enum: ['text', 'video', 'link'], description: 'A valid YouTube URL supplied as a link is returned as contentType youtube.' },
-      contentBody: { type: 'string', description: 'Required only for text lessons' },
+      contentBody: {
+        type: 'string',
+        maxLength: 102400,
+        description: 'Required only for text lessons. Sanitized HTML supports headings, lists, tables, links, and uploaded Cloudinary images.',
+      },
       contentUrl: { type: 'string', format: 'uri', description: 'Required for video/link lessons' },
       mediaKey: {
         type: 'string',

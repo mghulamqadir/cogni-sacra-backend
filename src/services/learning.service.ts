@@ -84,7 +84,7 @@ type ProgressLesson = {
 async function markLessonComplete(actor: AuthenticatedUser, lesson: ProgressLesson) {
   const e = await enrollment(actor._id.toString(), lesson.courseId.toString());
   await LessonProgress.findOneAndUpdate(
-    { enrollmentId: e._id, lessonId },
+    { enrollmentId: e._id, lessonId: lesson._id },
     {
       $setOnInsert: {
         institutionId: lesson.institutionId,

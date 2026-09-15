@@ -24,7 +24,7 @@ export const lessonInput = Joi.object({
   title: Joi.string().trim().min(1).max(160).required(),
   order: Joi.number().integer().min(0).required(),
   contentType: Joi.string().valid('text', 'video', 'link').required(),
-  contentBody: Joi.string().when('contentType', {
+  contentBody: Joi.string().max(100 * 1024).when('contentType', {
     is: 'text',
     then: Joi.required(),
     otherwise: Joi.forbidden(),

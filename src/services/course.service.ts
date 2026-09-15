@@ -8,6 +8,7 @@ import { UserRole, type AuthenticatedUser } from '../types/index.js';
 import { deleteMedia } from './media.service.js';
 import { logger } from '../utils/logger.js';
 import { isYouTubeUrl, parseYouTubeUrl } from '../utils/youtube.js';
+import { sanitizeRichText } from '../utils/richText.js';
 
 const clean = (value: string): string =>
   value
@@ -35,6 +36,13 @@ function normalizeLessonContent(input: any): any {
       'INVALID_YOUTUBE_URL'
     );
   return youtube ? { ...input, contentType: 'youtube', ...youtube } : { ...input, videoId: undefined, embedUrl: undefined };
+}
+
+function prepareLessonContent(input: any): any {
+  const normalized = normalizeLessonContent(input);
+  if (normalized.contentType !== 'text') return normalized;
+  const richText = sanitizeRichText(normalized.contentBody ?? '');
+  return { ...normalized, contentBody: richText.html, plainTextForAI: richText.plainText };
 }
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -178,7 +186,7 @@ export async function createBulkCourse(actor: AuthenticatedUser, input: any) {
   for (let mi = 0; mi < modules.length; mi += 1) {
     const lessonOrders = new Set<number>();
     for (let li = 0; li < modules[mi].lessons.length; li += 1) {
-      const lesson = normalizeLessonContent(modules[mi].lessons[li]);
+      const lesson = prepareLessonContent(modules[mi].lessons[li]);
       modules[mi].lessons[li] = lesson;
       if (lessonOrders.has(lesson.order))
         throw new AppError(`Duplicate lesson order at modules[${mi}].lessons[${li}].order`, 422, 'VALIDATION_ERROR');
@@ -206,14 +214,29 @@ export async function createBulkCourse(actor: AuthenticatedUser, input: any) {
         instructorId: [UserRole.Instructor, UserRole.IndependentInstructor].includes(actor.role) ? actor._id : undefined,
         createdBy: actor._id,
       }], { session });
-      const createdModules = await CourseModule.create(modules.map(({ lessons: _lessons, ...module }) => ({ ...module, courseId: course[0]._id, institutionId: course[0].institutionId })), { session });
-      const lessonDocs = modules.flatMap((module, index) => module.lessons.map((lesson: any) => ({
-        ...lesson,
-        moduleId: createdModules[index]._id,
-        courseId: course[0]._id,
-        institutionId: course[0].institutionId,
-        plainTextForAI: clean(lesson.contentType === 'text' ? lesson.contentBody : lesson.aiContext),
-      })));
+      const createdCourse = course[0];
+      if (!createdCourse) throw new AppError('Course creation failed', 500, 'CREATE_FAILED');
+      const createdModules = await CourseModule.create(
+        modules.map(({ lessons: _lessons, ...module }) => ({
+          ...module,
+          courseId: createdCourse._id,
+          institutionId: createdCourse.institutionId,
+        })),
+        { session }
+      );
+      const lessonDocs = modules.flatMap((module, index) => {
+        const createdModule = createdModules[index];
+        if (!createdModule) throw new AppError('Module creation failed', 500, 'CREATE_FAILED');
+        return module.lessons.map((lesson: any) => ({
+          ...lesson,
+          moduleId: createdModule._id,
+          courseId: createdCourse._id,
+          institutionId: createdCourse.institutionId,
+          plainTextForAI:
+            lesson.plainTextForAI ??
+            clean(lesson.contentType === 'text' ? lesson.contentBody : lesson.aiContext),
+        }));
+      });
       const lessons = await Lesson.create(lessonDocs, { session });
       result = { course: course[0], modules: createdModules, lessons };
     });
@@ -355,14 +378,14 @@ export async function addLesson(
   await editableCourse(actor, module.courseId.toString());
   if (input.contentType === 'video' && input.mediaKey !== undefined)
     assertVideoKeyBelongsToActor(actor, input.mediaKey);
-  const normalized = normalizeLessonContent(input);
+  const normalized = prepareLessonContent(input);
   const source = normalized.contentType === 'text' ? normalized.contentBody : normalized.aiContext;
   return Lesson.create({
     ...normalized,
     moduleId,
     courseId: module.courseId,
     institutionId: module.institutionId,
-    plainTextForAI: clean(source ?? ''),
+    plainTextForAI: normalized.plainTextForAI ?? clean(source ?? ''),
   });
 }
 export async function updateLesson(
@@ -376,9 +399,10 @@ export async function updateLesson(
   const oldMediaKey = lesson.mediaKey;
   const oldContentUrl = lesson.contentUrl;
   lesson.set(input);
-  lesson.set(normalizeLessonContent({
+  lesson.set(prepareLessonContent({
     contentType: lesson.contentType,
     contentUrl: lesson.contentUrl,
+    contentBody: lesson.contentBody,
   }));
   if (lesson.contentType === 'video' && lesson.mediaKey !== undefined)
     assertVideoKeyBelongsToActor(actor, lesson.mediaKey);
@@ -386,7 +410,7 @@ export async function updateLesson(
     throw new AppError('mediaKey is required when replacing a video', 422, 'MEDIA_KEY_REQUIRED');
   if (lesson.contentType !== 'video') lesson.mediaKey = undefined;
   const source = lesson.contentType === 'text' ? lesson.contentBody : lesson.aiContext;
-  lesson.plainTextForAI = clean(source ?? '');
+  lesson.plainTextForAI = lesson.plainTextForAI || clean(source ?? '');
   const saved = await lesson.save();
   if (oldMediaKey && oldMediaKey !== saved.mediaKey) await removeVideoAsset(oldMediaKey);
   return saved;
